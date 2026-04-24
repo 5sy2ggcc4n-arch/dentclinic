@@ -189,7 +189,7 @@ function Hastalar({ patients, setPatients }) {
     p.ad.toLowerCase().includes(search.toLowerCase()) || p.tc.includes(search) || p.tel.includes(search)
   );
 
-  const emptyForm = () => ({ ad: "", tc: "", tel: "", dogum: "", cinsiyet: "KadÄ±n", kan: "A+", adres: "", kayit: today(), anamnez: { sigara: "HayÄ±r", alkol: "HayÄ±r", alerji: "", ilac: "", hastalik: "", notlar: "" } });
+  const emptyForm = () => ({ ad: "", tc: "", tel: "", dogum: "", cinsiyet: "KadÄ±n", kan: "A+", adres: "", kayit: "", anamnez: { sigara: "HayÄ±r", alkol: "HayÄ±r", alerji: "", ilac: "", hastalik: "", notlar: "" } });
 
   const openYeni = () => { setForm(emptyForm()); setModal("yeni"); };
   const openDuzenle = (p) => { setForm(JSON.parse(JSON.stringify(p))); setModal(p.id); };
