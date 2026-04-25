@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 
-// â”€â”€â”€ SUPABASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const SUPABASE_URL = "https://dtagxninhpduxidrjxab.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0YWd4bmluaHBkdXhpZHJqeGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMzYwMDgsImV4cCI6MjA5MjYxMjAwOH0.NxNWh-z7x8pEM-1vGmOgS38NYcbpDyrwbLPPZ2y1yvk";
 
@@ -35,7 +34,6 @@ const db = {
   }
 };
 
-// â”€â”€â”€ RENKLER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const G = {
   primary: "#1A6B5A",
   primaryLight: "#E8F4F1",
@@ -51,18 +49,18 @@ const G = {
 const globalStyle = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: ${G.bg}; color: ${G.text}; min-height: 100vh; }
+  body { font-family: 'DM Sans', sans-serif; background: #F7F5F2; color: #1C1C1C; min-height: 100vh; }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: ${G.border}; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: #E5E0D8; border-radius: 3px; }
   input, select, textarea, button { font-family: 'DM Sans', sans-serif; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 `;
 
-const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const uid = () => Date.now() + "-" + Math.random().toString(36).slice(2);
 const today = () => new Date().toISOString().split("T")[0];
 const fmt = (d) => d ? new Date(d + "T12:00:00").toLocaleDateString("tr-TR") : "-";
 
-// â”€â”€â”€ STILLER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const S = {
   sidebar: { width: 220, minHeight: "100vh", background: G.primary, display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, zIndex: 100 },
   logo: { padding: "24px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)" },
@@ -71,10 +69,10 @@ const S = {
   nav: { padding: "12px 10px", flex: 1 },
   main: { marginLeft: 220, flex: 1, padding: "28px 32px", minHeight: "100vh" },
   pageTitle: { fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 700, marginBottom: 22, color: G.text },
-  card: { background: G.card, borderRadius: 14, padding: "20px 22px", border: `1px solid ${G.border}`, marginBottom: 18 },
+  card: { background: G.card, borderRadius: 14, padding: "20px 22px", border: "1px solid #E5E0D8", marginBottom: 18 },
   cardTitle: { fontSize: 14, fontWeight: 600, marginBottom: 14, color: G.text },
-  statsGrid: (cols = 3) => ({ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 14, marginBottom: 20 }),
-  statCard: { background: G.card, borderRadius: 12, padding: "18px 20px", border: `1px solid ${G.border}` },
+  statsGrid: (cols) => ({ display: "grid", gridTemplateColumns: "repeat(" + (cols || 2) + ", 1fr)", gap: 14, marginBottom: 20 }),
+  statCard: { background: G.card, borderRadius: 12, padding: "18px 20px", border: "1px solid #E5E0D8" },
   statVal: { fontSize: 26, fontWeight: 700, color: G.primary, fontFamily: "'Playfair Display', serif" },
   statLbl: { fontSize: 12, color: G.muted, marginTop: 2 },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" },
@@ -82,41 +80,34 @@ const S = {
   formGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 13 },
   fg: { display: "flex", flexDirection: "column", gap: 5 },
   label: { fontSize: 12, fontWeight: 500, color: G.muted },
-  input: { padding: "9px 13px", borderRadius: 9, border: `1.5px solid ${G.border}`, fontSize: 14, outline: "none", background: "#FAFAF8", color: G.text, width: "100%", transition: "border 0.15s" },
-  textarea: { padding: "9px 13px", borderRadius: 9, border: `1.5px solid ${G.border}`, fontSize: 14, outline: "none", background: "#FAFAF8", color: G.text, width: "100%", resize: "vertical", minHeight: 80, fontFamily: "'DM Sans', sans-serif" },
-  select: { padding: "9px 13px", borderRadius: 9, border: `1.5px solid ${G.border}`, fontSize: 14, outline: "none", background: "#FAFAF8", color: G.text, width: "100%" },
+  input: { padding: "9px 13px", borderRadius: 9, border: "1.5px solid #E5E0D8", fontSize: 14, outline: "none", background: "#FAFAF8", color: G.text, width: "100%" },
+  textarea: { padding: "9px 13px", borderRadius: 9, border: "1.5px solid #E5E0D8", fontSize: 14, outline: "none", background: "#FAFAF8", color: G.text, width: "100%", resize: "vertical", minHeight: 80, fontFamily: "'DM Sans', sans-serif" },
+  select: { padding: "9px 13px", borderRadius: 9, border: "1.5px solid #E5E0D8", fontSize: 14, outline: "none", background: "#FAFAF8", color: G.text, width: "100%" },
 };
 
-const btn = (variant = "primary", size = "md") => ({
+const btn = (variant, size) => ({
   padding: size === "sm" ? "6px 13px" : "10px 20px",
   borderRadius: 9, fontSize: size === "sm" ? 13 : 14, fontWeight: 500,
   cursor: "pointer", border: "none", transition: "all 0.15s",
-  ...(variant === "primary" ? { background: G.primary, color: "#fff" } : {}),
-  ...(variant === "secondary" ? { background: G.primaryLight, color: G.primary } : {}),
-  ...(variant === "danger" ? { background: G.dangerLight, color: G.danger } : {}),
+  background: variant === "danger" ? G.dangerLight : variant === "secondary" ? G.primaryLight : G.primary,
+  color: variant === "danger" ? G.danger : variant === "secondary" ? G.primary : "#fff",
 });
 
 const badge = (color) => {
-  const map = {
-    green: ["#E8F4F1", "#0F6E56"],
-    yellow: ["#FEF3CD", "#92600A"],
-    red: [G.dangerLight, G.danger],
-    blue: ["#EBF4FF", "#1D4ED8"]
-  };
+  const map = { green: ["#E8F4F1", "#0F6E56"], yellow: ["#FEF3CD", "#92600A"], red: ["#FDECEA", "#C0392B"], blue: ["#EBF4FF", "#1D4ED8"] };
   const [bg, c] = map[color] || map.blue;
   return { display: "inline-block", padding: "2px 10px", borderRadius: 20, fontSize: 12, fontWeight: 500, background: bg, color: c };
 };
 
-// â”€â”€â”€ YARDIMCI BILESENLER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function NavItem({ icon, label, active, onClick }) {
+function NavItem({ label, active, onClick }) {
   return (
     <button onClick={onClick} style={{
       display: "flex", alignItems: "center", gap: 9, padding: "10px 13px", borderRadius: 9,
       marginBottom: 3, cursor: "pointer", color: active ? "#fff" : "rgba(255,255,255,0.72)",
       fontSize: 14, fontWeight: 500, background: active ? "rgba(255,255,255,0.18)" : "transparent",
-      border: "none", width: "100%", textAlign: "left", transition: "all 0.15s"
+      border: "none", width: "100%", textAlign: "left",
     }}>
-      <span style={{ fontSize: 17, width: 20, textAlign: "center" }}>{icon}</span> {label}
+      {label}
     </button>
   );
 }
@@ -129,10 +120,9 @@ function Modal({ children, onClose }) {
   );
 }
 
-function StatCard({ icon, value, label }) {
+function StatCard({ value, label }) {
   return (
     <div style={S.statCard}>
-      <div style={{ fontSize: 22, marginBottom: 8 }}>{icon}</div>
       <div style={S.statVal}>{value}</div>
       <div style={S.statLbl}>{label}</div>
     </div>
@@ -144,14 +134,14 @@ function Table({ cols, rows, emptyMsg }) {
     <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
         <tr>{cols.map((c, i) => (
-          <th key={i} style={{ textAlign: "left", padding: "8px 12px", fontSize: 11, fontWeight: 600, color: G.muted, textTransform: "uppercase", letterSpacing: "0.4px", borderBottom: `1.5px solid ${G.border}` }}>{c}</th>
+          <th key={i} style={{ textAlign: "left", padding: "8px 12px", fontSize: 11, fontWeight: 600, color: G.muted, textTransform: "uppercase", letterSpacing: "0.4px", borderBottom: "1.5px solid #E5E0D8" }}>{c}</th>
         ))}</tr>
       </thead>
       <tbody>
         {rows.length === 0
           ? <tr><td colSpan={cols.length} style={{ textAlign: "center", padding: 30, color: G.muted, fontSize: 14 }}>{emptyMsg || "Kayit bulunamadi."}</td></tr>
           : rows.map((row, i) => (
-            <tr key={i} style={{ borderBottom: i < rows.length - 1 ? `1px solid ${G.border}` : "none" }}>
+            <tr key={i} style={{ borderBottom: i < rows.length - 1 ? "1px solid #E5E0D8" : "none" }}>
               {row.map((cell, j) => <td key={j} style={{ padding: "11px 12px", fontSize: 14 }}>{cell}</td>)}
             </tr>
           ))}
@@ -163,27 +153,23 @@ function Table({ cols, rows, emptyMsg }) {
 function Yukleniyor() {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", flexDirection: "column", gap: 12 }}>
-      <div style={{ width: 40, height: 40, border: `3px solid ${G.border}`, borderTopColor: G.primary, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-      <div style={{ color: G.muted, fontSize: 14 }}>Yukluyor...</div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ width: 40, height: 40, border: "3px solid #E5E0D8", borderTopColor: G.primary, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div style={{ color: G.muted, fontSize: 14 }}>Yukleniyor...</div>
     </div>
   );
 }
 
-// â”€â”€â”€ DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Dashboard({ patients, appointments }) {
   const todayApts = appointments.filter(a => a.tarih === today());
-
   return (
     <div>
       <div style={S.pageTitle}>Genel Bakis</div>
       <div style={S.statsGrid(2)}>
-        <StatCard icon="ğŸ‘¥" value={patients.length} label="Toplam Hasta" />
-        <StatCard icon="ğŸ“…" value={todayApts.length} label="Bugunku Randevu" />
+        <StatCard value={patients.length} label="Toplam Hasta" />
+        <StatCard value={todayApts.length} label="Bugunku Randevu" />
       </div>
-
       <div style={S.card}>
-        <div style={S.cardTitle}>Bugunku Randevular â€” {fmt(today())}</div>
+        <div style={S.cardTitle}>{"Bugunku Randevular - " + fmt(today())}</div>
         {todayApts.length === 0
           ? <p style={{ fontSize: 14, color: G.muted }}>Bugun randevu bulunmuyor.</p>
           : <Table
@@ -195,7 +181,6 @@ function Dashboard({ patients, appointments }) {
             />
         }
       </div>
-
       <div style={S.card}>
         <div style={S.cardTitle}>Son Kayitli Hastalar</div>
         <Table
@@ -212,7 +197,6 @@ function Dashboard({ patients, appointments }) {
   );
 }
 
-// â”€â”€â”€ HASTALAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Hastalar({ patients, setPatients }) {
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(null);
@@ -279,6 +263,15 @@ function Hastalar({ patients, setPatients }) {
     setTedaviForm(null);
   };
 
+  const silTedavi = async (tedaviId) => {
+    if (!window.confirm("Bu tedavi kaydi silinsin mi?")) return;
+    const hasta = patients.find(p => p.id === detay);
+    const yeniListe = (hasta.tedaviler || []).filter(t => t.id !== tedaviId);
+    await db.update("hastalar", detay, { tedaviler: yeniListe });
+    setPatients(ps => ps.map(p => p.id === detay ? { ...p, tedaviler: yeniListe } : p));
+    setTedaviDetay(null);
+  };
+
   const detayHasta = patients.find(p => p.id === detay);
 
   return (
@@ -288,7 +281,6 @@ function Hastalar({ patients, setPatients }) {
         <input style={{ ...S.input, flex: 1 }} placeholder="Ad, TC veya telefon ile ara..." value={search} onChange={e => setSearch(e.target.value)} />
         <button style={btn("primary")} onClick={openYeni}>+ Yeni Hasta</button>
       </div>
-
       <div style={S.card}>
         <Table
           cols={["Ad Soyad", "TC", "Telefon", "Kan", "Kayit Tarihi", "Islemler"]}
@@ -308,22 +300,20 @@ function Hastalar({ patients, setPatients }) {
         />
       </div>
 
-      {/* DETAY MODAL */}
       {detay && detayHasta && (
         <Modal onClose={() => { setDetay(null); setTedaviForm(null); setTedaviDetay(null); }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, marginBottom: 3 }}>{detayHasta.ad}</div>
-              <span style={{ fontSize: 12, color: G.muted }}>{detayHasta.tel} Â· {detayHasta.kan} Â· {detayHasta.cinsiyet}</span>
+              <span style={{ fontSize: 12, color: G.muted }}>{detayHasta.tel} - {detayHasta.kan} - {detayHasta.cinsiyet}</span>
             </div>
             <button style={btn("secondary", "sm")} onClick={() => { setDetay(null); setTedaviForm(null); setTedaviDetay(null); }}>Kapat</button>
           </div>
-
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {["anamnez", "tedaviler"].map(t => (
               <button key={t} onClick={() => { setDetayTab(t); setTedaviForm(null); setTedaviDetay(null); }}
                 style={{ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", border: "none", background: detayTab === t ? G.primary : G.primaryLight, color: detayTab === t ? "#fff" : G.primary }}>
-                {t === "anamnez" ? "Anamnez" : `Tedaviler (${(detayHasta.tedaviler || []).length})`}
+                {t === "anamnez" ? "Anamnez" : "Tedaviler (" + (detayHasta.tedaviler || []).length + ")"}
               </button>
             ))}
           </div>
@@ -345,7 +335,6 @@ function Hastalar({ patients, setPatients }) {
 
           {detayTab === "tedaviler" && (
             <div>
-              {/* TEDAVÄ° DETAY GÃ–RÃœNTÃœLE */}
               {tedaviDetay && (
                 <div style={{ background: G.bg, borderRadius: 10, padding: 16, marginBottom: 14 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
@@ -369,7 +358,6 @@ function Hastalar({ patients, setPatients }) {
                 </div>
               )}
 
-              {/* TEDAVÄ° EKLEME FORMU */}
               {tedaviForm ? (
                 <div>
                   <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Yeni Tedavi Ekle</div>
@@ -405,12 +393,7 @@ function Hastalar({ patients, setPatients }) {
                           t.notlar
                             ? <button style={btn("secondary", "sm")} onClick={() => setTedaviDetay(t)}>Goruntule</button>
                             : <span style={{ color: G.muted, fontSize: 12 }}>-</span>,
-                          <button style={btn("danger", "sm")} onClick={async () => {
-                            if (!window.confirm("Bu tedavi kaydi silinsin mi?")) return;
-                            const yeniListe = (detayHasta.tedaviler || []).filter(x => x.id !== t.id);
-                            await db.update("hastalar", detay, { tedaviler: yeniListe });
-                            setPatients(ps => ps.map(p => p.id === detay ? { ...p, tedaviler: yeniListe } : p));
-                          }}>Sil</button>
+                          <button style={btn("danger", "sm")} onClick={() => silTedavi(t.id)}>Sil</button>
                         ])}
                       />
                   }
@@ -421,7 +404,6 @@ function Hastalar({ patients, setPatients }) {
         </Modal>
       )}
 
-      {/* HASTA EKLE / DUZENLE MODAL */}
       {modal && form && (
         <Modal onClose={() => setModal(null)}>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, marginBottom: 18 }}>
@@ -444,8 +426,7 @@ function Hastalar({ patients, setPatients }) {
             </div>
             <div style={S.fg}><label style={S.label}>Kayit Tarihi</label><input type="date" style={S.input} value={form.kayit} onChange={e => setForm(f => ({ ...f, kayit: e.target.value }))} /></div>
             <div style={S.fg}><label style={S.label}>Adres</label><input style={S.input} value={form.adres} onChange={e => setForm(f => ({ ...f, adres: e.target.value }))} /></div>
-
-            <div style={{ gridColumn: "1/-1", borderTop: `1px solid ${G.border}`, paddingTop: 14, marginTop: 4 }}>
+            <div style={{ gridColumn: "1/-1", borderTop: "1px solid #E5E0D8", paddingTop: 14, marginTop: 4 }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: G.muted, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 12 }}>Anamnez</div>
               <div style={S.formGrid}>
                 <div style={S.fg}><label style={S.label}>Sigara</label><select style={S.select} value={form.anamnez.sigara} onChange={e => setForm(f => ({ ...f, anamnez: { ...f.anamnez, sigara: e.target.value } }))}><option>Hayir</option><option>Evet</option></select></div>
@@ -469,7 +450,6 @@ function Hastalar({ patients, setPatients }) {
   );
 }
 
-// â”€â”€â”€ RANDEVULAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Randevular({ appointments, setAppointments, patients }) {
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ hastaId: "", hasta_ad: "", tarih: today(), saat: "09:00", tedavi: "", hekim: "", durum: "Bekliyor" });
@@ -511,16 +491,13 @@ function Randevular({ appointments, setAppointments, patients }) {
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 18 }}>
         <button style={btn("primary")} onClick={() => setModal(true)}>+ Yeni Randevu</button>
       </div>
-
       <div style={S.card}>
         <Table
           cols={["Tarih", "Saat", "Hasta", "Tedavi", "Hekim", "Durum", "Islem"]}
           rows={sorted.map(a => [
             fmt(a.tarih),
             <strong>{a.saat}</strong>,
-            a.hasta_ad,
-            a.tedavi,
-            a.hekim,
+            a.hasta_ad, a.tedavi, a.hekim,
             <select value={a.durum} onChange={e => durumGuncelle(a.id, e.target.value)}
               style={{ ...S.select, width: "auto", padding: "3px 8px", fontSize: 12 }}>
               {["Bekliyor", "Onaylandi", "Tamamlandi", "Iptal"].map(d => <option key={d}>{d}</option>)}
@@ -530,7 +507,6 @@ function Randevular({ appointments, setAppointments, patients }) {
           emptyMsg="Randevu bulunamadi."
         />
       </div>
-
       {modal && (
         <Modal onClose={() => setModal(false)}>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, marginBottom: 18 }}>Yeni Randevu</div>
@@ -565,7 +541,6 @@ function Randevular({ appointments, setAppointments, patients }) {
   );
 }
 
-// â”€â”€â”€ ANA UYGULAMA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function App() {
   const [page, setPage] = useState("dashboard");
   const [patients, setPatients] = useState([]);
@@ -578,16 +553,16 @@ export default function App() {
         const [h, r] = await Promise.all([db.get("hastalar"), db.get("randevular")]);
         setPatients(Array.isArray(h) ? h : []);
         setAppointments(Array.isArray(r) ? r : []);
-      } catch { }
+      } catch {}
       setYukleniyor(false);
     }
     yukle();
   }, []);
 
   const nav = [
-    { id: "dashboard", icon: "ğŸ ", label: "Genel Bakis" },
-    { id: "hastalar", icon: "ğŸ‘¥", label: "Hastalar" },
-    { id: "randevular", icon: "ğŸ“…", label: "Randevular" },
+    { id: "dashboard", label: "Genel Bakis" },
+    { id: "hastalar", label: "Hastalar" },
+    { id: "randevular", label: "Randevular" },
   ];
 
   return (
@@ -600,10 +575,10 @@ export default function App() {
             <div style={S.logoS}>Klinik Yonetim Sistemi</div>
           </div>
           <nav style={S.nav}>
-            {nav.map(n => <NavItem key={n.id} icon={n.icon} label={n.label} active={page === n.id} onClick={() => setPage(n.id)} />)}
+            {nav.map(n => <NavItem key={n.id} label={n.label} active={page === n.id} onClick={() => setPage(n.id)} />)}
           </nav>
           <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>v2.0 Â· Supabase</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>v2.0</div>
           </div>
         </aside>
         <main style={S.main}>
