@@ -161,6 +161,59 @@ function Yukleniyor() {
 
 function Dashboard({ patients, appointments }) {
   const todayApts = appointments.filter(a => a.tarih === today());
+  const devamEden = patients.flatMap(p =>
+    (p.tedaviler || [])
+      .filter(t => t.durum === "Devam Ediyor")
+      .map(t => ({ ...t, hastaAd: p.ad, hastaId: p.id }))
+  );
+  return (
+    <div>
+      <div style={S.pageTitle}>Genel Bakis</div>
+      <div style={S.statsGrid(2)}>
+        <StatCard value={patients.length} label="Toplam Hasta" />
+        <StatCard value={todayApts.length} label="Bugunku Randevu" />
+      </div>
+      <div style={S.card}>
+        <div style={S.cardTitle}>{"Bugunku Randevular - " + fmt(today())}</div>
+        {todayApts.length === 0
+          ? <p style={{ fontSize: 14, color: G.muted }}>Bugun randevu bulunmuyor.</p>
+          : <Table
+              cols={["Saat", "Hasta", "Tedavi", "Hekim", "Durum"]}
+              rows={todayApts.map(a => [
+                <strong>{a.saat}</strong>, a.hasta_ad, a.tedavi, a.hekim,
+                <span style={badge(a.durum === "Onaylandi" ? "green" : "yellow")}>{a.durum}</span>
+              ])}
+            />
+        }
+      </div>
+      <div style={{ ...S.card, borderLeft: "4px solid #D4A853" }}>
+        <div style={S.cardTitle}>Devam Eden Tedaviler</div>
+        {devamEden.length === 0
+          ? <p style={{ fontSize: 14, color: G.muted }}>Devam eden tedavi bulunmuyor.</p>
+          : <Table
+              cols={["Hasta", "Tedavi", "Dis No", "Hekim", "Tarih"]}
+              rows={devamEden.map(t => [
+                <strong>{t.hastaAd}</strong>, t.tedavi, t.dis || "-", t.hekim || "-", fmt(t.tarih)
+              ])}
+            />
+        }
+      </div>
+      <div style={S.card}>
+        <div style={S.cardTitle}>Son Kayitli Hastalar</div>
+        <Table
+          cols={["Ad Soyad", "Telefon", "Kan Grubu", "Kayit Tarihi"]}
+          rows={patients.slice(-5).reverse().map(p => [
+            <strong>{p.ad}</strong>, p.tel,
+            <span style={badge("blue")}>{p.kan}</span>,
+            fmt(p.kayit)
+          ])}
+          emptyMsg="Henuz hasta kaydi yok."
+        />
+      </div>
+    </div>
+  );
+}
+  const todayApts = appointments.filter(a => a.tarih === today());
   return (
     <div>
       <div style={S.pageTitle}>Genel Bakis</div>
