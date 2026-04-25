@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-// ─── SUPABASE ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ SUPABASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const SUPABASE_URL = "https://dtagxninhpduxidrjxab.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0YWd4bmluaHBkdXhpZHJqeGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMzYwMDgsImV4cCI6MjA5MjYxMjAwOH0.NxNWh-z7x8pEM-1vGmOgS38NYcbpDyrwbLPPZ2y1yvk";
 
@@ -35,7 +35,7 @@ const db = {
   }
 };
 
-// ─── RENKLER ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ RENKLER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const G = {
   primary: "#1A6B5A",
   primaryLight: "#E8F4F1",
@@ -62,7 +62,7 @@ const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const today = () => new Date().toISOString().split("T")[0];
 const fmt = (d) => d ? new Date(d + "T12:00:00").toLocaleDateString("tr-TR") : "-";
 
-// ─── STILLER ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ STILLER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const S = {
   sidebar: { width: 220, minHeight: "100vh", background: G.primary, display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, zIndex: 100 },
   logo: { padding: "24px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)" },
@@ -107,7 +107,7 @@ const badge = (color) => {
   return { display: "inline-block", padding: "2px 10px", borderRadius: 20, fontSize: 12, fontWeight: 500, background: bg, color: c };
 };
 
-// ─── YARDIMCI BILESENLER ──────────────────────────────────────────────────────
+// â”€â”€â”€ YARDIMCI BILESENLER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function NavItem({ icon, label, active, onClick }) {
   return (
     <button onClick={onClick} style={{
@@ -170,7 +170,7 @@ function Yukleniyor() {
   );
 }
 
-// ─── DASHBOARD ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Dashboard({ patients, appointments }) {
   const todayApts = appointments.filter(a => a.tarih === today());
 
@@ -178,12 +178,12 @@ function Dashboard({ patients, appointments }) {
     <div>
       <div style={S.pageTitle}>Genel Bakis</div>
       <div style={S.statsGrid(2)}>
-        <StatCard icon="👥" value={patients.length} label="Toplam Hasta" />
-        <StatCard icon="📅" value={todayApts.length} label="Bugunku Randevu" />
+        <StatCard icon="ğŸ‘¥" value={patients.length} label="Toplam Hasta" />
+        <StatCard icon="ğŸ“…" value={todayApts.length} label="Bugunku Randevu" />
       </div>
 
       <div style={S.card}>
-        <div style={S.cardTitle}>Bugunku Randevular — {fmt(today())}</div>
+        <div style={S.cardTitle}>Bugunku Randevular â€” {fmt(today())}</div>
         {todayApts.length === 0
           ? <p style={{ fontSize: 14, color: G.muted }}>Bugun randevu bulunmuyor.</p>
           : <Table
@@ -212,7 +212,7 @@ function Dashboard({ patients, appointments }) {
   );
 }
 
-// ─── HASTALAR ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ HASTALAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Hastalar({ patients, setPatients }) {
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(null);
@@ -314,7 +314,7 @@ function Hastalar({ patients, setPatients }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, marginBottom: 3 }}>{detayHasta.ad}</div>
-              <span style={{ fontSize: 12, color: G.muted }}>{detayHasta.tel} · {detayHasta.kan} · {detayHasta.cinsiyet}</span>
+              <span style={{ fontSize: 12, color: G.muted }}>{detayHasta.tel} Â· {detayHasta.kan} Â· {detayHasta.cinsiyet}</span>
             </div>
             <button style={btn("secondary", "sm")} onClick={() => { setDetay(null); setTedaviForm(null); setTedaviDetay(null); }}>Kapat</button>
           </div>
@@ -345,7 +345,7 @@ function Hastalar({ patients, setPatients }) {
 
           {detayTab === "tedaviler" && (
             <div>
-              {/* TEDAVİ DETAY GÖRÜNTÜLE */}
+              {/* TEDAVÄ° DETAY GÃ–RÃœNTÃœLE */}
               {tedaviDetay && (
                 <div style={{ background: G.bg, borderRadius: 10, padding: 16, marginBottom: 14 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
@@ -369,7 +369,7 @@ function Hastalar({ patients, setPatients }) {
                 </div>
               )}
 
-              {/* TEDAVİ EKLEME FORMU */}
+              {/* TEDAVÄ° EKLEME FORMU */}
               {tedaviForm ? (
                 <div>
                   <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Yeni Tedavi Ekle</div>
@@ -398,13 +398,19 @@ function Hastalar({ patients, setPatients }) {
                   {(detayHasta.tedaviler || []).length === 0
                     ? <p style={{ fontSize: 13, color: G.muted }}>Henuz tedavi kaydi yok.</p>
                     : <Table
-                        cols={["Tarih", "Tedavi", "Dis", "Hekim", "Durum", "Not"]}
+                        cols={["Tarih", "Tedavi", "Dis", "Hekim", "Durum", "Not", "Islem"]}
                         rows={(detayHasta.tedaviler || []).map(t => [
                           fmt(t.tarih), t.tedavi, t.dis || "-", t.hekim || "-",
                           <span style={badge(t.durum === "Tamamlandi" ? "green" : t.durum === "Devam Ediyor" ? "yellow" : "blue")}>{t.durum}</span>,
                           t.notlar
                             ? <button style={btn("secondary", "sm")} onClick={() => setTedaviDetay(t)}>Goruntule</button>
-                            : <span style={{ color: G.muted, fontSize: 12 }}>-</span>
+                            : <span style={{ color: G.muted, fontSize: 12 }}>-</span>,
+                          <button style={btn("danger", "sm")} onClick={async () => {
+                            if (!window.confirm("Bu tedavi kaydi silinsin mi?")) return;
+                            const yeniListe = (detayHasta.tedaviler || []).filter(x => x.id !== t.id);
+                            await db.update("hastalar", detay, { tedaviler: yeniListe });
+                            setPatients(ps => ps.map(p => p.id === detay ? { ...p, tedaviler: yeniListe } : p));
+                          }}>Sil</button>
                         ])}
                       />
                   }
@@ -463,7 +469,7 @@ function Hastalar({ patients, setPatients }) {
   );
 }
 
-// ─── RANDEVULAR ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ RANDEVULAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Randevular({ appointments, setAppointments, patients }) {
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ hastaId: "", hasta_ad: "", tarih: today(), saat: "09:00", tedavi: "", hekim: "", durum: "Bekliyor" });
@@ -559,7 +565,7 @@ function Randevular({ appointments, setAppointments, patients }) {
   );
 }
 
-// ─── ANA UYGULAMA ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ ANA UYGULAMA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function App() {
   const [page, setPage] = useState("dashboard");
   const [patients, setPatients] = useState([]);
@@ -579,9 +585,9 @@ export default function App() {
   }, []);
 
   const nav = [
-    { id: "dashboard", icon: "🏠", label: "Genel Bakis" },
-    { id: "hastalar", icon: "👥", label: "Hastalar" },
-    { id: "randevular", icon: "📅", label: "Randevular" },
+    { id: "dashboard", icon: "ğŸ ", label: "Genel Bakis" },
+    { id: "hastalar", icon: "ğŸ‘¥", label: "Hastalar" },
+    { id: "randevular", icon: "ğŸ“…", label: "Randevular" },
   ];
 
   return (
@@ -597,7 +603,7 @@ export default function App() {
             {nav.map(n => <NavItem key={n.id} icon={n.icon} label={n.label} active={page === n.id} onClick={() => setPage(n.id)} />)}
           </nav>
           <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>v2.0 · Supabase</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>v2.0 Â· Supabase</div>
           </div>
         </aside>
         <main style={S.main}>
