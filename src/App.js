@@ -585,9 +585,9 @@ export default function App() {
   }, []);
 
   const nav = [
-    { id: "dashboard", icon: "ğŸ ", label: "Genel Bakis" },
-    { id: "hastalar", icon: "ğŸ‘¥", label: "Hastalar" },
-    { id: "randevular", icon: "ğŸ“…", label: "Randevular" },
+    { id: "dashboard", icon: ">", label: "Genel Bakis" },
+    { id: "hastalar", icon: "+", label: "Hastalar" },
+    { id: "randevular", icon: "*", label: "Randevular" },
   ];
 
   return (
