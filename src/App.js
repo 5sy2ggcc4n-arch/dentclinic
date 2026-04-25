@@ -176,16 +176,16 @@ function Dashboard({ patients, appointments }) {
 
   return (
     <div>
-      <div style={S.pageTitle}>Genel Bakis</div>
+      <div style={S.pageTitle}>Genel Bakış</div>
       <div style={S.statsGrid(2)}>
         <StatCard icon="ğŸ‘¥" value={patients.length} label="Toplam Hasta" />
-        <StatCard icon="ğŸ“…" value={todayApts.length} label="Bugunku Randevu" />
+        <StatCard icon="ğŸ“…" value={todayApts.length} label="Bugünkü Randevu" />
       </div>
 
       <div style={S.card}>
-        <div style={S.cardTitle}>Bugunku Randevular â€” {fmt(today())}</div>
+        <div style={S.cardTitle}>Bugünkü Randevular ” {fmt(today())}</div>
         {todayApts.length === 0
-          ? <p style={{ fontSize: 14, color: G.muted }}>Bugun randevu bulunmuyor.</p>
+          ? <p style={{ fontSize: 14, color: G.muted }}>Bugün randevu bulunmuyor.</p>
           : <Table
               cols={["Saat", "Hasta", "Tedavi", "Hekim", "Durum"]}
               rows={todayApts.map(a => [
