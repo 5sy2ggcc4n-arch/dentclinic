@@ -283,7 +283,7 @@ function Hastalar({ patients, setPatients }) {
 
   return (
     <div>
-      <div style={S.pageTitle}>Hasta Kayitlari</div>
+      <div style={S.pageTitle}>Hasta Kayıtları</div>
       <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
         <input style={{ ...S.input, flex: 1 }} placeholder="Ad, TC veya telefon ile ara..." value={search} onChange={e => setSearch(e.target.value)} />
         <button style={btn("primary")} onClick={openYeni}>+ Yeni Hasta</button>
