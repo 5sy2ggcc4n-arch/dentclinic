@@ -34,7 +34,19 @@ const db = {
   }
 };
 
-const G = {
+const storage = {
+  async upload(file, path) {
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/tedavi-fotograflari/${path}`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": file.type },
+      body: file
+    });
+    return res.json();
+  },
+  url(path) {
+    return `${SUPABASE_URL}/storage/v1/object/public/tedavi-fotograflari/${path}`;
+  }
+};
   primary: "#1A6B5A",
   primaryLight: "#E8F4F1",
   bg: "#F7F5F2",
@@ -159,12 +171,12 @@ function Yukleniyor() {
   );
 }
 
-function Dashboard({ patients, appointments }) {
+function Dashboard({ patients, appointments, onHastaDetay }) {
   const todayApts = appointments.filter(a => a.tarih === today());
   const devamEden = patients.flatMap(p =>
     (p.tedaviler || [])
       .filter(t => t.durum === "Devam Ediyor")
-      .map(t => ({ ...t, hastaAd: p.ad }))
+      .map(t => ({ ...t, hastaAd: p.ad, hastaId: p.id }))
   );
   return (
     <div>
@@ -191,9 +203,10 @@ function Dashboard({ patients, appointments }) {
         {devamEden.length === 0
           ? <p style={{ fontSize: 14, color: G.muted }}>Devam eden tedavi bulunmuyor.</p>
           : <Table
-              cols={["Hasta", "Tedavi", "Dis No", "Hekim", "Tarih"]}
+              cols={["Hasta", "Tedavi", "Dis No", "Hekim", "Tarih", "Detay"]}
               rows={devamEden.map(t => [
-                <strong>{t.hastaAd}</strong>, t.tedavi, t.dis || "-", t.hekim || "-", fmt(t.tarih)
+                <strong>{t.hastaAd}</strong>, t.tedavi, t.dis || "-", t.hekim || "-", fmt(t.tarih),
+                <button style={btn("secondary", "sm")} onClick={() => onHastaDetay(t.hastaId)}>Hasta Detayi</button>
               ])}
             />
         }
@@ -214,15 +227,23 @@ function Dashboard({ patients, appointments }) {
   );
 }
 
-function Hastalar({ patients, setPatients }) {
+function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(null);
-  const [detay, setDetay] = useState(null);
-  const [detayTab, setDetayTab] = useState("anamnez");
+  const [detay, setDetay] = useState(acikHastaId || null);
+  const [detayTab, setDetayTab] = useState(acikHastaId ? "tedaviler" : "anamnez");
   const [form, setForm] = useState(null);
   const [tedaviForm, setTedaviForm] = useState(null);
   const [tedaviDetay, setTedaviDetay] = useState(null);
   const [kayit, setKayit] = useState(false);
+
+  useEffect(() => {
+    if (acikHastaId) {
+      setDetay(acikHastaId);
+      setDetayTab("tedaviler");
+      if (onAcikHastaClear) onAcikHastaClear();
+    }
+  }, [acikHastaId]);
 
   const filtered = patients.filter(p =>
     p.ad.toLowerCase().includes(search.toLowerCase()) ||
@@ -273,7 +294,13 @@ function Hastalar({ patients, setPatients }) {
   const saveTedavi = async () => {
     if (!tedaviForm.tedavi.trim()) return alert("Tedavi turu zorunludur.");
     const hasta = patients.find(p => p.id === detay);
-    const yeniTedavi = { ...tedaviForm, id: uid() };
+    let fotografUrl = "";
+    if (tedaviForm.fotografDosya) {
+      const path = `${detay}/${uid()}-${tedaviForm.fotografDosya.name}`;
+      await storage.upload(tedaviForm.fotografDosya, path);
+      fotografUrl = storage.url(path);
+    }
+    const yeniTedavi = { tarih: tedaviForm.tarih, tedavi: tedaviForm.tedavi, dis: tedaviForm.dis, hekim: tedaviForm.hekim, notlar: tedaviForm.notlar, durum: tedaviForm.durum, id: uid(), ...(fotografUrl ? { fotografUrl } : {}) };
     const yeniListe = [...(hasta.tedaviler || []), yeniTedavi];
     await db.update("hastalar", detay, { tedaviler: yeniListe });
     setPatients(ps => ps.map(p => p.id === detay ? { ...p, tedaviler: yeniListe } : p));
@@ -358,8 +385,8 @@ function Hastalar({ patients, setPatients }) {
                     <div style={{ fontWeight: 600, fontSize: 15 }}>{tedaviDetay.tedavi}</div>
                     <button style={btn("secondary", "sm")} onClick={() => setTedaviDetay(null)}>Kapat</button>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    {[["Tarih", fmt(tedaviDetay.tarih)], ["Dis No", tedaviDetay.dis || "-"], ["Hekim", tedaviDetay.hekim || "-"], ["Durum", tedaviDetay.durum]].map(([l, v]) => (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+                    {[["Dis No", tedaviDetay.dis || "-"], ["Hekim", tedaviDetay.hekim || "-"]].map(([l, v]) => (
                       <div key={l}>
                         <div style={{ fontSize: 11, color: G.muted, marginBottom: 2 }}>{l}</div>
                         <div style={{ fontSize: 14, fontWeight: 500 }}>{v}</div>
@@ -371,6 +398,38 @@ function Hastalar({ patients, setPatients }) {
                         <div style={{ fontSize: 14, lineHeight: 1.6 }}>{tedaviDetay.notlar}</div>
                       </div>
                     )}
+                    {tedaviDetay.fotografUrl && (
+                      <div style={{ gridColumn: "1/-1" }}>
+                        <div style={{ fontSize: 11, color: G.muted, marginBottom: 6 }}>Fotograf</div>
+                        <img src={tedaviDetay.fotografUrl} alt="Tedavi fotografı" style={{ width: "100%", borderRadius: 8, maxHeight: 300, objectFit: "cover", cursor: "pointer" }} onClick={() => window.open(tedaviDetay.fotografUrl, "_blank")} />
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ borderTop: "1px solid #E5E0D8", paddingTop: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: G.muted, marginBottom: 10 }}>Durumu Guncelle</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                      <div style={S.fg}>
+                        <label style={S.label}>Durum</label>
+                        <select style={S.select} value={tedaviDetay.durum} onChange={e => setTedaviDetay(d => ({ ...d, durum: e.target.value }))}>
+                          <option>Tamamlandi</option><option>Devam Ediyor</option><option>Planlandi</option>
+                        </select>
+                      </div>
+                      <div style={S.fg}>
+                        <label style={S.label}>Tamamlanma Tarihi</label>
+                        <input type="date" style={S.input} value={tedaviDetay.tamamTarih || ""} onChange={e => setTedaviDetay(d => ({ ...d, tamamTarih: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button style={btn("primary", "sm")} onClick={async () => {
+                        const hasta = patients.find(p => p.id === detay);
+                        const yeniListe = (hasta.tedaviler || []).map(t =>
+                          t.id === tedaviDetay.id ? { ...t, durum: tedaviDetay.durum, tamamTarih: tedaviDetay.tamamTarih } : t
+                        );
+                        await db.update("hastalar", detay, { tedaviler: yeniListe });
+                        setPatients(ps => ps.map(p => p.id === detay ? { ...p, tedaviler: yeniListe } : p));
+                        setTedaviDetay(null);
+                      }}>Kaydet</button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -389,6 +448,11 @@ function Hastalar({ patients, setPatients }) {
                       </select>
                     </div>
                     <div style={{ ...S.fg, gridColumn: "1/-1" }}><label style={S.label}>Notlar</label><textarea style={S.textarea} placeholder="Tedavi hakkinda notlar..." value={tedaviForm.notlar} onChange={e => setTedaviForm(f => ({ ...f, notlar: e.target.value }))} /></div>
+                    <div style={{ ...S.fg, gridColumn: "1/-1" }}>
+                      <label style={S.label}>Fotograf Ekle (isteğe bagli)</label>
+                      <input type="file" accept="image/*" style={{ ...S.input, padding: "6px 13px" }}
+                        onChange={e => setTedaviForm(f => ({ ...f, fotografDosya: e.target.files[0] }))} />
+                    </div>
                   </div>
                   <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                     <button style={btn("secondary", "sm")} onClick={() => setTedaviForm(null)}>Iptal</button>
@@ -563,6 +627,7 @@ export default function App() {
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [acikHasta, setAcikHasta] = useState(null);
 
   useEffect(() => {
     async function yukle() {
@@ -601,8 +666,8 @@ export default function App() {
         <main style={S.main}>
           {yukleniyor ? <Yukleniyor /> : (
             <>
-              {page === "dashboard" && <Dashboard patients={patients} appointments={appointments} />}
-              {page === "hastalar" && <Hastalar patients={patients} setPatients={setPatients} />}
+              {page === "dashboard" && <Dashboard patients={patients} appointments={appointments} onHastaDetay={(id) => { setAcikHasta(id); setPage("hastalar"); }} />}
+              {page === "hastalar" && <Hastalar patients={patients} setPatients={setPatients} acikHastaId={acikHasta} onAcikHastaClear={() => setAcikHasta(null)} />}
               {page === "randevular" && <Randevular appointments={appointments} setAppointments={setAppointments} patients={patients} />}
             </>
           )}
