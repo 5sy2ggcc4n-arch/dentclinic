@@ -401,7 +401,7 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
                     {tedaviDetay.fotografUrl && (
                       <div style={{ gridColumn: "1/-1" }}>
                         <div style={{ fontSize: 11, color: G.muted, marginBottom: 6 }}>Fotograf</div>
-                        <img src={tedaviDetay.fotografUrl} alt="Tedavi fotografı" style={{ width: "100%", borderRadius: 8, maxHeight: 300, objectFit: "cover", cursor: "pointer" }} onClick={() => window.open(tedaviDetay.fotografUrl, "_blank")} />
+                        <img src={tedaviDetay.fotografUrl} alt="Tedavi fotografÄ±" style={{ width: "100%", borderRadius: 8, maxHeight: 300, objectFit: "cover", cursor: "pointer" }} onClick={() => window.open(tedaviDetay.fotografUrl, "_blank")} />
                       </div>
                     )}
                   </div>
@@ -449,7 +449,7 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
                     </div>
                     <div style={{ ...S.fg, gridColumn: "1/-1" }}><label style={S.label}>Notlar</label><textarea style={S.textarea} placeholder="Tedavi hakkinda notlar..." value={tedaviForm.notlar} onChange={e => setTedaviForm(f => ({ ...f, notlar: e.target.value }))} /></div>
                     <div style={{ ...S.fg, gridColumn: "1/-1" }}>
-                      <label style={S.label}>Fotograf Ekle (isteğe bagli)</label>
+                      <label style={S.label}>Fotograf Ekle (isteÄŸe bagli)</label>
                       <input type="file" accept="image/*" style={{ ...S.input, padding: "6px 13px" }}
                         onChange={e => setTedaviForm(f => ({ ...f, fotografDosya: e.target.files[0] }))} />
                     </div>
