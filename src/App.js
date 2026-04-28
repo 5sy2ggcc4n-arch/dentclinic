@@ -374,7 +374,30 @@ var path = detay + "/" + uid() + "-" + temizAd;
           </div>
 
           {detayTab === "anamnez" && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+  <div>
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+      <button style={btn("primary", "sm")} onClick={function() {
+        setForm(Object.assign({}, detayHasta));
+        setModal(detayHasta.id);
+        setDetay(null);
+      }}>Anamnezi Duzenle</button>
+    </div>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      {[["Sigara", "sigara"], ["Alkol", "alkol"], ["Alerji", "alerji"], ["Kullandigi Ilaclar", "ilac"], ["Kronik Hastaliklar", "hastalik"]].map(function(item) {
+        return (
+          <div key={item[1]}>
+            <div style={{ fontSize: 12, color: G.muted, marginBottom: 3 }}>{item[0]}</div>
+            <div style={{ fontSize: 14, fontWeight: 500 }}>{(detayHasta.anamnez || {})[item[1]] || "-"}</div>
+          </div>
+        );
+      })}
+      <div style={{ gridColumn: "1/-1" }}>
+        <div style={{ fontSize: 12, color: G.muted, marginBottom: 3 }}>Notlar</div>
+        <div style={{ fontSize: 14 }}>{(detayHasta.anamnez || {}).notlar || "-"}</div>
+      </div>
+    </div>
+  </div>
+)}
               {[["Sigara", "sigara"], ["Alkol", "alkol"], ["Alerji", "alerji"], ["Kullandigi Ilaclar", "ilac"], ["Kronik Hastaliklar", "hastalik"]].map(function(item) {
                 return (
                   <div key={item[1]}>
