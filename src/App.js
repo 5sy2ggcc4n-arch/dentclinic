@@ -36,7 +36,7 @@ const db = {
 
 const storage = {
   async upload(file, path) {
-    const res = await fetch(SUPABASE_URL + "/storage/v1/object/tedavi-fotograflari/" + path, {
+    const res = await fetch(SUPABASE_URL + "/storage/v1/object/tedavi%20fotograflar/" + path, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": file.type },
       body: file
@@ -44,7 +44,7 @@ const storage = {
     return res.json();
   },
   url(path) {
-    return SUPABASE_URL + "/storage/v1/object/public/tedavi-fotograflari/" + path;
+    return SUPABASE_URL + "/storage/v1/object/public/tedavi%20fotograflar/" + path;
   }
 };
 
