@@ -293,7 +293,8 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
     var hasta = patients.find(function(p) { return p.id === detay; });
     var fotografUrl = "";
     if (tedaviForm.fotografDosya) {
-      var path = detay + "/" + uid() + "-" + tedaviForm.fotografDosya.name;
+      var temizAd = tedaviForm.fotografDosya.name.replace(/[^a-zA-Z0-9.]/g, "_");
+var path = detay + "/" + uid() + "-" + temizAd;
       await storage.upload(tedaviForm.fotografDosya, path);
       fotografUrl = storage.url(path);
     }
