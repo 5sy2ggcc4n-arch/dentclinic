@@ -97,6 +97,7 @@ const S = {
   input: { padding: "9px 13px", borderRadius: 9, border: "1.5px solid #E5E0D8", fontSize: 14, outline: "none", background: "#FAFAF8", color: G.text, width: "100%" },
   textarea: { padding: "9px 13px", borderRadius: 9, border: "1.5px solid #E5E0D8", fontSize: 14, outline: "none", background: "#FAFAF8", color: G.text, width: "100%", resize: "vertical", minHeight: 80, fontFamily: "'DM Sans', sans-serif" },
   select: { padding: "9px 13px", borderRadius: 9, border: "1.5px solid #E5E0D8", fontSize: 14, outline: "none", background: "#FAFAF8", color: G.text, width: "100%" },
+  hastaLink: { fontWeight: 600, cursor: "pointer", color: G.primary, textDecoration: "underline", textDecorationColor: "rgba(26,107,90,0.3)", textUnderlineOffset: "2px" },
 };
 
 function btn(variant, size) {
@@ -184,6 +185,11 @@ function Dashboard({ patients, appointments, onHastaDetay }) {
       return Object.assign({}, t, { hastaAd: p.ad, hastaId: p.id });
     });
   });
+
+  function hastaLink(id, ad) {
+    return <span style={S.hastaLink} onClick={function() { onHastaDetay(id); }}>{ad}</span>;
+  }
+
   return (
     <div>
       <div style={S.pageTitle}>Genel Bakis</div>
@@ -197,10 +203,15 @@ function Dashboard({ patients, appointments, onHastaDetay }) {
           ? <p style={{ fontSize: 14, color: G.muted }}>Bugun randevu bulunmuyor.</p>
           : <Table
               cols={["Saat", "Hasta", "Tedavi", "Hekim", "Durum"]}
-              rows={todayApts.map(function(a) { return [
-                <strong>{a.saat}</strong>, a.hasta_ad, a.tedavi, a.hekim,
-                <span style={badge(a.durum === "Onaylandi" ? "green" : "yellow")}>{a.durum}</span>
-              ]; })}
+              rows={todayApts.map(function(a) {
+                var hasta = patients.find(function(p) { return p.id === a.hasta_id; });
+                return [
+                  <strong>{a.saat}</strong>,
+                  hasta ? hastaLink(hasta.id, a.hasta_ad) : a.hasta_ad,
+                  a.tedavi, a.hekim,
+                  <span style={badge(a.durum === "Onaylandi" ? "green" : "yellow")}>{a.durum}</span>
+                ];
+              })}
             />
         }
       </div>
@@ -209,10 +220,10 @@ function Dashboard({ patients, appointments, onHastaDetay }) {
         {devamEden.length === 0
           ? <p style={{ fontSize: 14, color: G.muted }}>Devam eden tedavi bulunmuyor.</p>
           : <Table
-              cols={["Hasta", "Tedavi", "Dis No", "Hekim", "Tarih", "Detay"]}
+              cols={["Hasta", "Tedavi", "Dis No", "Hekim", "Tarih"]}
               rows={devamEden.map(function(t) { return [
-                <strong>{t.hastaAd}</strong>, t.tedavi, t.dis || "-", t.hekim || "-", fmt(t.tarih),
-                <button style={btn("secondary", "sm")} onClick={function() { onHastaDetay(t.hastaId); }}>Hasta Detayi</button>
+                hastaLink(t.hastaId, t.hastaAd),
+                t.tedavi, t.dis || "-", t.hekim || "-", fmt(t.tarih)
               ]; })}
             />
         }
@@ -222,7 +233,8 @@ function Dashboard({ patients, appointments, onHastaDetay }) {
         <Table
           cols={["Ad Soyad", "Telefon", "Kan Grubu", "Kayit Tarihi"]}
           rows={patients.slice(-5).reverse().map(function(p) { return [
-            <strong>{p.ad}</strong>, p.tel,
+            hastaLink(p.id, p.ad),
+            p.tel,
             <span style={badge("blue")}>{p.kan}</span>,
             fmt(p.kayit)
           ]; })}
@@ -248,7 +260,7 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
   useEffect(function() {
     if (acikHastaId) {
       setDetay(acikHastaId);
-      setDetayTab("tedaviler");
+      setDetayTab("anamnez");
       if (onAcikHastaClear) onAcikHastaClear();
     }
   }, [acikHastaId]);
@@ -265,6 +277,8 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
 
   function openYeni() { setForm(emptyForm()); setModal("yeni"); }
   function openDuzenle(p) { setForm(JSON.parse(JSON.stringify(p))); setModal(p.id); }
+  function openDetay(p) { setDetay(p.id); setDetayTab("anamnez"); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }
+  function closeDetay() { setDetay(null); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }
 
   async function save() {
     if (!form.ad.trim() || !form.tc.trim()) return alert("Ad ve TC zorunludur.");
@@ -297,8 +311,6 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
     await db.delete("hastalar", id);
     setPatients(function(ps) { return ps.filter(function(p) { return p.id !== id; }); });
   }
-
-  function openDetay(p) { setDetay(p.id); setDetayTab("anamnez"); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }
 
   async function saveTedavi() {
     if (!tedaviForm.tedavi.trim()) return alert("Tedavi turu zorunludur.");
@@ -350,7 +362,7 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
         <Table
           cols={["Ad Soyad", "TC", "Telefon", "Kan", "Kayit Tarihi", "Islemler"]}
           rows={filtered.map(function(p) { return [
-            <strong>{p.ad}</strong>,
+            <span style={S.hastaLink} onClick={function() { openDetay(p); }}>{p.ad}</span>,
             <span style={{ fontFamily: "monospace", fontSize: 13 }}>{p.tc}</span>,
             p.tel,
             <span style={badge("blue")}>{p.kan}</span>,
@@ -366,13 +378,13 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
       </div>
 
       {detay && detayHasta && (
-        <Modal onClose={function() { setDetay(null); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }}>
+        <Modal onClose={closeDetay}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, marginBottom: 3 }}>{detayHasta.ad}</div>
               <span style={{ fontSize: 12, color: G.muted }}>{detayHasta.tel} - {detayHasta.kan} - {detayHasta.cinsiyet}</span>
             </div>
-            <button style={btn("secondary", "sm")} onClick={function() { setDetay(null); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }}>Kapat</button>
+            <button style={btn("secondary", "sm")} onClick={closeDetay}>Kapat</button>
           </div>
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {["anamnez", "tedaviler"].map(function(t) {
@@ -572,7 +584,7 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
   );
 }
 
-function Randevular({ appointments, setAppointments, patients }) {
+function Randevular({ appointments, setAppointments, patients, onHastaDetay }) {
   var [modal, setModal] = useState(false);
   var [form, setForm] = useState({ hastaId: "", hasta_ad: "", tarih: today(), saat: "09:00", tedavi: "", hekim: "", durum: "Bekliyor" });
   var [kayit, setKayit] = useState(false);
@@ -612,16 +624,22 @@ function Randevular({ appointments, setAppointments, patients }) {
       <div style={S.card}>
         <Table
           cols={["Tarih", "Saat", "Hasta", "Tedavi", "Hekim", "Durum", "Islem"]}
-          rows={sorted.map(function(a) { return [
-            fmt(a.tarih),
-            <strong>{a.saat}</strong>,
-            a.hasta_ad, a.tedavi, a.hekim,
-            <select value={a.durum} onChange={function(e) { durumGuncelle(a.id, e.target.value); }}
-              style={Object.assign({}, S.select, { width: "auto", padding: "3px 8px", fontSize: 12 })}>
-              {["Bekliyor", "Onaylandi", "Tamamlandi", "Iptal"].map(function(d) { return <option key={d}>{d}</option>; })}
-            </select>,
-            <button style={btn("danger", "sm")} onClick={function() { sil(a.id); }}>Sil</button>
-          ]; })}
+          rows={sorted.map(function(a) {
+            var hasta = patients.find(function(p) { return p.id === a.hasta_id; });
+            return [
+              fmt(a.tarih),
+              <strong>{a.saat}</strong>,
+              hasta
+                ? <span style={S.hastaLink} onClick={function() { onHastaDetay(hasta.id); }}>{a.hasta_ad}</span>
+                : a.hasta_ad,
+              a.tedavi, a.hekim,
+              <select value={a.durum} onChange={function(e) { durumGuncelle(a.id, e.target.value); }}
+                style={Object.assign({}, S.select, { width: "auto", padding: "3px 8px", fontSize: 12 })}>
+                {["Bekliyor", "Onaylandi", "Tamamlandi", "Iptal"].map(function(d) { return <option key={d}>{d}</option>; })}
+              </select>,
+              <button style={btn("danger", "sm")} onClick={function() { sil(a.id); }}>Sil</button>
+            ];
+          })}
           emptyMsg="Randevu bulunamadi."
         />
       </div>
@@ -678,6 +696,11 @@ export default function App() {
     yukle();
   }, []);
 
+  function hastaDetayAc(id) {
+    setAcikHasta(id);
+    setPage("hastalar");
+  }
+
   var nav = [
     { id: "dashboard", label: "Genel Bakis" },
     { id: "hastalar", label: "Hastalar" },
@@ -703,9 +726,9 @@ export default function App() {
         <main style={S.main}>
           {yukleniyor ? <Yukleniyor /> : (
             <>
-              {page === "dashboard" && <Dashboard patients={patients} appointments={appointments} onHastaDetay={function(id) { setAcikHasta(id); setPage("hastalar"); }} />}
+              {page === "dashboard" && <Dashboard patients={patients} appointments={appointments} onHastaDetay={hastaDetayAc} />}
               {page === "hastalar" && <Hastalar patients={patients} setPatients={setPatients} acikHastaId={acikHasta} onAcikHastaClear={function() { setAcikHasta(null); }} />}
-              {page === "randevular" && <Randevular appointments={appointments} setAppointments={setAppointments} patients={patients} />}
+              {page === "randevular" && <Randevular appointments={appointments} setAppointments={setAppointments} patients={patients} onHastaDetay={hastaDetayAc} />}
             </>
           )}
         </main>
@@ -713,3 +736,4 @@ export default function App() {
     </>
   );
 }
+              
