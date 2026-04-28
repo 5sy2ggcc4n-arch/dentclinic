@@ -241,6 +241,8 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
   var [form, setForm] = useState(null);
   var [tedaviForm, setTedaviForm] = useState(null);
   var [tedaviDetay, setTedaviDetay] = useState(null);
+  var [anamnezDuzenle, setAnamnezDuzenle] = useState(false);
+  var [anamnezForm, setAnamnezForm] = useState(null);
   var [kayit, setKayit] = useState(false);
 
   useEffect(function() {
@@ -280,13 +282,23 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
     setKayit(false);
   }
 
+  async function saveAnamnez() {
+    setKayit(true);
+    try {
+      await db.update("hastalar", detay, { anamnez: anamnezForm });
+      setPatients(function(ps) { return ps.map(function(p) { return p.id === detay ? Object.assign({}, p, { anamnez: anamnezForm }) : p; }); });
+      setAnamnezDuzenle(false);
+    } catch(e) { alert("Kayit sirasinda hata olustu."); }
+    setKayit(false);
+  }
+
   async function sil(id) {
     if (!window.confirm("Hasta silinsin mi?")) return;
     await db.delete("hastalar", id);
     setPatients(function(ps) { return ps.filter(function(p) { return p.id !== id; }); });
   }
 
-  function openDetay(p) { setDetay(p.id); setDetayTab("anamnez"); setTedaviForm(null); setTedaviDetay(null); }
+  function openDetay(p) { setDetay(p.id); setDetayTab("anamnez"); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }
 
   async function saveTedavi() {
     if (!tedaviForm.tedavi.trim()) return alert("Tedavi turu zorunludur.");
@@ -294,7 +306,7 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
     var fotografUrl = "";
     if (tedaviForm.fotografDosya) {
       var temizAd = tedaviForm.fotografDosya.name.replace(/[^a-zA-Z0-9.]/g, "_");
-var path = detay + "/" + uid() + "-" + temizAd;
+      var path = detay + "/" + uid() + "-" + temizAd;
       await storage.upload(tedaviForm.fotografDosya, path);
       fotografUrl = storage.url(path);
     }
@@ -354,18 +366,18 @@ var path = detay + "/" + uid() + "-" + temizAd;
       </div>
 
       {detay && detayHasta && (
-        <Modal onClose={function() { setDetay(null); setTedaviForm(null); setTedaviDetay(null); }}>
+        <Modal onClose={function() { setDetay(null); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, marginBottom: 3 }}>{detayHasta.ad}</div>
               <span style={{ fontSize: 12, color: G.muted }}>{detayHasta.tel} - {detayHasta.kan} - {detayHasta.cinsiyet}</span>
             </div>
-            <button style={btn("secondary", "sm")} onClick={function() { setDetay(null); setTedaviForm(null); setTedaviDetay(null); }}>Kapat</button>
+            <button style={btn("secondary", "sm")} onClick={function() { setDetay(null); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }}>Kapat</button>
           </div>
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {["anamnez", "tedaviler"].map(function(t) {
               return (
-                <button key={t} onClick={function() { setDetayTab(t); setTedaviForm(null); setTedaviDetay(null); }}
+                <button key={t} onClick={function() { setDetayTab(t); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }}
                   style={{ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", border: "none", background: detayTab === t ? G.primary : G.primaryLight, color: detayTab === t ? "#fff" : G.primary }}>
                   {t === "anamnez" ? "Anamnez" : "Tedaviler (" + (detayHasta.tedaviler || []).length + ")"}
                 </button>
@@ -374,42 +386,44 @@ var path = detay + "/" + uid() + "-" + temizAd;
           </div>
 
           {detayTab === "anamnez" && (
-  <div>
-    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-      <button style={btn("primary", "sm")} onClick={function() {
-        setForm(Object.assign({}, detayHasta));
-        setModal(detayHasta.id);
-        setDetay(null);
-      }}>Anamnezi Duzenle</button>
-    </div>
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-      {[["Sigara", "sigara"], ["Alkol", "alkol"], ["Alerji", "alerji"], ["Kullandigi Ilaclar", "ilac"], ["Kronik Hastaliklar", "hastalik"]].map(function(item) {
-        return (
-          <div key={item[1]}>
-            <div style={{ fontSize: 12, color: G.muted, marginBottom: 3 }}>{item[0]}</div>
-            <div style={{ fontSize: 14, fontWeight: 500 }}>{(detayHasta.anamnez || {})[item[1]] || "-"}</div>
-          </div>
-        );
-      })}
-      <div style={{ gridColumn: "1/-1" }}>
-        <div style={{ fontSize: 12, color: G.muted, marginBottom: 3 }}>Notlar</div>
-        <div style={{ fontSize: 14 }}>{(detayHasta.anamnez || {}).notlar || "-"}</div>
-      </div>
-    </div>
-  </div>
-)}
-              {[["Sigara", "sigara"], ["Alkol", "alkol"], ["Alerji", "alerji"], ["Kullandigi Ilaclar", "ilac"], ["Kronik Hastaliklar", "hastalik"]].map(function(item) {
-                return (
-                  <div key={item[1]}>
-                    <div style={{ fontSize: 12, color: G.muted, marginBottom: 3 }}>{item[0]}</div>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>{(detayHasta.anamnez || {})[item[1]] || "-"}</div>
+            <div>
+              {anamnezDuzenle ? (
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Anamnezi Duzenle</div>
+                  <div style={S.formGrid}>
+                    <div style={S.fg}><label style={S.label}>Sigara</label><select style={S.select} value={anamnezForm.sigara} onChange={function(e) { setAnamnezForm(function(f) { return Object.assign({}, f, { sigara: e.target.value }); }); }}><option>Hayir</option><option>Evet</option></select></div>
+                    <div style={S.fg}><label style={S.label}>Alkol</label><select style={S.select} value={anamnezForm.alkol} onChange={function(e) { setAnamnezForm(function(f) { return Object.assign({}, f, { alkol: e.target.value }); }); }}><option>Hayir</option><option>Evet</option></select></div>
+                    <div style={S.fg}><label style={S.label}>Alerji</label><input style={S.input} value={anamnezForm.alerji} onChange={function(e) { setAnamnezForm(function(f) { return Object.assign({}, f, { alerji: e.target.value }); }); }} /></div>
+                    <div style={S.fg}><label style={S.label}>Kullandigi Ilaclar</label><input style={S.input} value={anamnezForm.ilac} onChange={function(e) { setAnamnezForm(function(f) { return Object.assign({}, f, { ilac: e.target.value }); }); }} /></div>
+                    <div style={Object.assign({}, S.fg, { gridColumn: "1/-1" })}><label style={S.label}>Kronik Hastaliklar</label><input style={S.input} value={anamnezForm.hastalik} onChange={function(e) { setAnamnezForm(function(f) { return Object.assign({}, f, { hastalik: e.target.value }); }); }} /></div>
+                    <div style={Object.assign({}, S.fg, { gridColumn: "1/-1" })}><label style={S.label}>Notlar</label><textarea style={S.textarea} value={anamnezForm.notlar} onChange={function(e) { setAnamnezForm(function(f) { return Object.assign({}, f, { notlar: e.target.value }); }); }} /></div>
                   </div>
-                );
-              })}
-              <div style={{ gridColumn: "1/-1" }}>
-                <div style={{ fontSize: 12, color: G.muted, marginBottom: 3 }}>Notlar</div>
-                <div style={{ fontSize: 14 }}>{(detayHasta.anamnez || {}).notlar || "-"}</div>
-              </div>
+                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 14 }}>
+                    <button style={btn("secondary", "sm")} onClick={function() { setAnamnezDuzenle(false); }}>Iptal</button>
+                    <button style={Object.assign({}, btn("primary", "sm"), { opacity: kayit ? 0.7 : 1 })} onClick={saveAnamnez} disabled={kayit}>{kayit ? "Kaydediliyor..." : "Kaydet"}</button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+                    <button style={btn("primary", "sm")} onClick={function() { setAnamnezForm(Object.assign({ sigara: "Hayir", alkol: "Hayir", alerji: "", ilac: "", hastalik: "", notlar: "" }, detayHasta.anamnez || {})); setAnamnezDuzenle(true); }}>Anamnezi Duzenle</button>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                    {[["Sigara", "sigara"], ["Alkol", "alkol"], ["Alerji", "alerji"], ["Kullandigi Ilaclar", "ilac"], ["Kronik Hastaliklar", "hastalik"]].map(function(item) {
+                      return (
+                        <div key={item[1]}>
+                          <div style={{ fontSize: 12, color: G.muted, marginBottom: 3 }}>{item[0]}</div>
+                          <div style={{ fontSize: 14, fontWeight: 500 }}>{(detayHasta.anamnez || {})[item[1]] || "-"}</div>
+                        </div>
+                      );
+                    })}
+                    <div style={{ gridColumn: "1/-1" }}>
+                      <div style={{ fontSize: 12, color: G.muted, marginBottom: 3 }}>Notlar</div>
+                      <div style={{ fontSize: 14 }}>{(detayHasta.anamnez || {}).notlar || "-"}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
