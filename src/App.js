@@ -178,6 +178,36 @@ function Yukleniyor() {
   );
 }
 
+function FotoGaleri({ fotograflar, tedaviAdi }) {
+  var [buyuk, setBuyuk] = useState(null);
+  if (!fotograflar || fotograflar.length === 0) return null;
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div style={{ fontSize: 11, color: G.muted, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>
+        {tedaviAdi} - Fotograflar ({fotograflar.length})
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        {fotograflar.map(function(url, i) {
+          return (
+            <div key={i} style={{ position: "relative", cursor: "pointer" }} onClick={function() { setBuyuk(url); }}>
+              <img src={url} alt={"Fotograf " + (i + 1)} style={{ width: "100%", height: 90, objectFit: "cover", borderRadius: 8, border: "1px solid #E5E0D8" }} />
+            </div>
+          );
+        })}
+      </div>
+      {buyuk && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={function() { setBuyuk(null); }}>
+          <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh" }}>
+            <img src={buyuk} alt="Buyuk fotograf" style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: 10, objectFit: "contain" }} />
+            <button onClick={function() { setBuyuk(null); }} style={{ position: "absolute", top: -16, right: -16, background: "#fff", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>x</button>
+            <a href={buyuk} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", marginTop: 10, color: "#fff", fontSize: 13 }} onClick={function(e) { e.stopPropagation(); }}>Tam boyut ac</a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Dashboard({ patients, appointments, onHastaDetay }) {
   var todayApts = appointments.filter(function(a) { return a.tarih === today(); });
   var devamEden = patients.flatMap(function(p) {
@@ -233,8 +263,7 @@ function Dashboard({ patients, appointments, onHastaDetay }) {
         <Table
           cols={["Ad Soyad", "Telefon", "Kan Grubu", "Kayit Tarihi"]}
           rows={patients.slice(-5).reverse().map(function(p) { return [
-            hastaLink(p.id, p.ad),
-            p.tel,
+            hastaLink(p.id, p.ad), p.tel,
             <span style={badge("blue")}>{p.kan}</span>,
             fmt(p.kayit)
           ]; })}
@@ -256,6 +285,7 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
   var [anamnezDuzenle, setAnamnezDuzenle] = useState(false);
   var [anamnezForm, setAnamnezForm] = useState(null);
   var [kayit, setKayit] = useState(false);
+  var [fotoYukleniyor, setFotoYukleniyor] = useState(false);
 
   useEffect(function() {
     if (acikHastaId) {
@@ -314,20 +344,49 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
 
   async function saveTedavi() {
     if (!tedaviForm.tedavi.trim()) return alert("Tedavi turu zorunludur.");
+    setFotoYukleniyor(true);
     var hasta = patients.find(function(p) { return p.id === detay; });
-    var fotografUrl = "";
-    if (tedaviForm.fotografDosya) {
-      var temizAd = tedaviForm.fotografDosya.name.replace(/[^a-zA-Z0-9.]/g, "_");
-      var path = detay + "/" + uid() + "-" + temizAd;
-      await storage.upload(tedaviForm.fotografDosya, path);
-      fotografUrl = storage.url(path);
+    var fotografUrls = [];
+    if (tedaviForm.fotografDosyalar && tedaviForm.fotografDosyalar.length > 0) {
+      for (var i = 0; i < tedaviForm.fotografDosyalar.length; i++) {
+        var dosya = tedaviForm.fotografDosyalar[i];
+        var temizAd = dosya.name.replace(/[^a-zA-Z0-9.]/g, "_");
+        var path = detay + "/" + uid() + "-" + temizAd;
+        await storage.upload(dosya, path);
+        fotografUrls.push(storage.url(path));
+      }
     }
-    var yeniTedavi = { id: uid(), tarih: tedaviForm.tarih, tedavi: tedaviForm.tedavi, dis: tedaviForm.dis, hekim: tedaviForm.hekim, notlar: tedaviForm.notlar, durum: tedaviForm.durum };
-    if (fotografUrl) yeniTedavi.fotografUrl = fotografUrl;
+    var yeniTedavi = { id: uid(), tarih: tedaviForm.tarih, tedavi: tedaviForm.tedavi, dis: tedaviForm.dis, hekim: tedaviForm.hekim, notlar: tedaviForm.notlar, durum: tedaviForm.durum, fotograflar: fotografUrls };
     var yeniListe = [...(hasta.tedaviler || []), yeniTedavi];
     await db.update("hastalar", detay, { tedaviler: yeniListe });
     setPatients(function(ps) { return ps.map(function(p) { return p.id === detay ? Object.assign({}, p, { tedaviler: yeniListe }) : p; }); });
     setTedaviForm(null);
+    setFotoYukleniyor(false);
+  }
+
+  async function fotoEkle(tedaviId, dosyalar) {
+    setFotoYukleniyor(true);
+    var hasta = patients.find(function(p) { return p.id === detay; });
+    var yeniUrls = [];
+    for (var i = 0; i < dosyalar.length; i++) {
+      var dosya = dosyalar[i];
+      var temizAd = dosya.name.replace(/[^a-zA-Z0-9.]/g, "_");
+      var path = detay + "/" + uid() + "-" + temizAd;
+      await storage.upload(dosya, path);
+      yeniUrls.push(storage.url(path));
+    }
+    var yeniListe = (hasta.tedaviler || []).map(function(t) {
+      if (t.id !== tedaviId) return t;
+      var mevcutFotolar = t.fotograflar || (t.fotografUrl ? [t.fotografUrl] : []);
+      return Object.assign({}, t, { fotograflar: [...mevcutFotolar, ...yeniUrls] });
+    });
+    await db.update("hastalar", detay, { tedaviler: yeniListe });
+    setPatients(function(ps) { return ps.map(function(p) { return p.id === detay ? Object.assign({}, p, { tedaviler: yeniListe }) : p; }); });
+    if (tedaviDetay && tedaviDetay.id === tedaviId) {
+      var guncellendi = yeniListe.find(function(t) { return t.id === tedaviId; });
+      if (guncellendi) setTedaviDetay(guncellendi);
+    }
+    setFotoYukleniyor(false);
   }
 
   async function silTedavi(tedaviId) {
@@ -462,14 +521,27 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
                         <div style={{ fontSize: 14, lineHeight: 1.6 }}>{tedaviDetay.notlar}</div>
                       </div>
                     )}
-                    {tedaviDetay.fotografUrl && (
-                      <div style={{ gridColumn: "1/-1" }}>
-                        <div style={{ fontSize: 11, color: G.muted, marginBottom: 6 }}>Fotograf</div>
-                        <img src={tedaviDetay.fotografUrl} alt="Tedavi fotografi" style={{ width: "100%", borderRadius: 8, maxHeight: 300, objectFit: "cover", cursor: "pointer" }} onClick={function() { window.open(tedaviDetay.fotografUrl, "_blank"); }} />
-                      </div>
-                    )}
                   </div>
-                  <div style={{ borderTop: "1px solid #E5E0D8", paddingTop: 12 }}>
+
+                  <FotoGaleri
+                    fotograflar={tedaviDetay.fotograflar || (tedaviDetay.fotografUrl ? [tedaviDetay.fotografUrl] : [])}
+                    tedaviAdi={tedaviDetay.tedavi}
+                  />
+
+                  <div style={{ marginTop: 12, borderTop: "1px solid #E5E0D8", paddingTop: 12 }}>
+                    <div style={{ fontSize: 12, color: G.muted, marginBottom: 6 }}>Fotograf Ekle</div>
+                    <input type="file" accept="image/*" multiple style={Object.assign({}, S.input, { padding: "6px 13px" })}
+                      onChange={function(e) {
+                        if (e.target.files && e.target.files.length > 0) {
+                          fotoEkle(tedaviDetay.id, Array.from(e.target.files));
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                    {fotoYukleniyor && <div style={{ fontSize: 12, color: G.primary, marginTop: 6 }}>Fotograflar yukleniyor...</div>}
+                  </div>
+
+                  <div style={{ borderTop: "1px solid #E5E0D8", paddingTop: 12, marginTop: 12 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: G.muted, marginBottom: 10 }}>Durumu Guncelle</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                       <div style={S.fg}>
@@ -505,30 +577,42 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
                     </div>
                     <div style={Object.assign({}, S.fg, { gridColumn: "1/-1" })}><label style={S.label}>Notlar</label><textarea style={S.textarea} placeholder="Tedavi hakkinda notlar..." value={tedaviForm.notlar} onChange={function(e) { setTedaviForm(function(f) { return Object.assign({}, f, { notlar: e.target.value }); }); }} /></div>
                     <div style={Object.assign({}, S.fg, { gridColumn: "1/-1" })}>
-                      <label style={S.label}>Fotograf Ekle (istege bagli)</label>
-                      <input type="file" accept="image/*" style={Object.assign({}, S.input, { padding: "6px 13px" })} onChange={function(e) { setTedaviForm(function(f) { return Object.assign({}, f, { fotografDosya: e.target.files[0] }); }); }} />
+                      <label style={S.label}>Fotograflar Ekle (birden fazla secebilirsiniz)</label>
+                      <input type="file" accept="image/*" multiple style={Object.assign({}, S.input, { padding: "6px 13px" })}
+                        onChange={function(e) { setTedaviForm(function(f) { return Object.assign({}, f, { fotografDosyalar: Array.from(e.target.files) }); }); }} />
+                      {tedaviForm.fotografDosyalar && tedaviForm.fotografDosyalar.length > 0 && (
+                        <div style={{ fontSize: 12, color: G.primary, marginTop: 4 }}>{tedaviForm.fotografDosyalar.length} fotograf secildi</div>
+                      )}
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                     <button style={btn("secondary", "sm")} onClick={function() { setTedaviForm(null); }}>Iptal</button>
-                    <button style={btn("primary", "sm")} onClick={saveTedavi}>Kaydet</button>
+                    <button style={Object.assign({}, btn("primary", "sm"), { opacity: fotoYukleniyor ? 0.7 : 1 })} onClick={saveTedavi} disabled={fotoYukleniyor}>
+                      {fotoYukleniyor ? "Fotograflar yukleniyor..." : "Kaydet"}
+                    </button>
                   </div>
                 </div>
               ) : (
                 <div>
                   <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-                    <button style={btn("primary", "sm")} onClick={function() { setTedaviDetay(null); setTedaviForm({ tarih: "", tedavi: "", dis: "", hekim: "", notlar: "", durum: "Tamamlandi", fotografDosya: null }); }}>+ Tedavi Ekle</button>
+                    <button style={btn("primary", "sm")} onClick={function() { setTedaviDetay(null); setTedaviForm({ tarih: "", tedavi: "", dis: "", hekim: "", notlar: "", durum: "Tamamlandi", fotografDosyalar: [] }); }}>+ Tedavi Ekle</button>
                   </div>
                   {(detayHasta.tedaviler || []).length === 0
                     ? <p style={{ fontSize: 13, color: G.muted }}>Henuz tedavi kaydi yok.</p>
                     : <Table
-                        cols={["Tarih", "Tedavi", "Dis", "Durum", "Detay", "Sil"]}
-                        rows={(detayHasta.tedaviler || []).map(function(t) { return [
-                          fmt(t.tarih), t.tedavi, t.dis || "-",
-                          <span style={badge(t.durum === "Tamamlandi" ? "green" : t.durum === "Devam Ediyor" ? "yellow" : "blue")}>{t.durum}</span>,
-                          <button style={btn("secondary", "sm")} onClick={function() { setTedaviDetay(t); }}>Goruntule</button>,
-                          <button style={btn("danger", "sm")} onClick={function() { silTedavi(t.id); }}>Sil</button>
-                        ]; })}
+                        cols={["Tarih", "Tedavi", "Dis", "Durum", "Foto", "Detay", "Sil"]}
+                        rows={(detayHasta.tedaviler || []).map(function(t) {
+                          var fotolar = t.fotograflar || (t.fotografUrl ? [t.fotografUrl] : []);
+                          return [
+                            fmt(t.tarih), t.tedavi, t.dis || "-",
+                            <span style={badge(t.durum === "Tamamlandi" ? "green" : t.durum === "Devam Ediyor" ? "yellow" : "blue")}>{t.durum}</span>,
+                            fotolar.length > 0
+                              ? <span style={{ fontSize: 12, color: G.primary, fontWeight: 500 }}>{fotolar.length} foto</span>
+                              : <span style={{ fontSize: 12, color: G.muted }}>-</span>,
+                            <button style={btn("secondary", "sm")} onClick={function() { setTedaviDetay(t); }}>Goruntule</button>,
+                            <button style={btn("danger", "sm")} onClick={function() { silTedavi(t.id); }}>Sil</button>
+                          ];
+                        })}
                       />
                   }
                 </div>
@@ -627,11 +711,8 @@ function Randevular({ appointments, setAppointments, patients, onHastaDetay }) {
           rows={sorted.map(function(a) {
             var hasta = patients.find(function(p) { return p.id === a.hasta_id; });
             return [
-              fmt(a.tarih),
-              <strong>{a.saat}</strong>,
-              hasta
-                ? <span style={S.hastaLink} onClick={function() { onHastaDetay(hasta.id); }}>{a.hasta_ad}</span>
-                : a.hasta_ad,
+              fmt(a.tarih), <strong>{a.saat}</strong>,
+              hasta ? <span style={S.hastaLink} onClick={function() { onHastaDetay(hasta.id); }}>{a.hasta_ad}</span> : a.hasta_ad,
               a.tedavi, a.hekim,
               <select value={a.durum} onChange={function(e) { durumGuncelle(a.id, e.target.value); }}
                 style={Object.assign({}, S.select, { width: "auto", padding: "3px 8px", fontSize: 12 })}>
@@ -736,4 +817,3 @@ export default function App() {
     </>
   );
 }
-              
