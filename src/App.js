@@ -261,11 +261,13 @@ function Dashboard({ patients, appointments, onHastaDetay }) {
       <div style={S.card}>
         <div style={S.cardTitle}>Son Kayitli Hastalar</div>
         <Table
-          cols={["Ad Soyad", "Telefon", "Kan Grubu", "Kayit Tarihi"]}
-          rows={patients.slice(-5).reverse().map(function(p) { return [
-            hastaLink(p.id, p.ad), p.tel,
-            <span style={badge("blue")}>{p.kan}</span>,
-            fmt(p.kayit)
+          cols={["Ad Soyad", "TC", "Telefon", "Dogum Tarihi", "Kayit Tarihi", "Islemler"]}
+rows={filtered.map(function(p) { return [
+  <span style={S.hastaLink} onClick={function() { openDetay(p); }}>{p.ad}</span>,
+  <span style={{ fontFamily: "monospace", fontSize: 13 }}>{p.tc}</span>,
+  p.tel,
+  fmt(p.dogum),
+  fmt(p.kayit),
           ]; })}
           emptyMsg="Henuz hasta kaydi yok."
         />
