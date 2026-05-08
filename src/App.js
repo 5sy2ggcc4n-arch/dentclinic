@@ -189,7 +189,7 @@ function FotoGaleri({ fotograflar, tedaviAdi }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
         {fotograflar.map(function(url, i) {
           return (
-            <div key={i} style={{ position: "relative", cursor: "pointer" }} onClick={function() { setBuyuk(url); }}>
+            <div key={i} style={{ cursor: "pointer" }} onClick={function() { setBuyuk(url); }}>
               <img src={url} alt={"Fotograf " + (i + 1)} style={{ width: "100%", height: 90, objectFit: "cover", borderRadius: 8, border: "1px solid #E5E0D8" }} />
             </div>
           );
@@ -199,7 +199,7 @@ function FotoGaleri({ fotograflar, tedaviAdi }) {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={function() { setBuyuk(null); }}>
           <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh" }}>
             <img src={buyuk} alt="Buyuk fotograf" style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: 10, objectFit: "contain" }} />
-            <button onClick={function() { setBuyuk(null); }} style={{ position: "absolute", top: -16, right: -16, background: "#fff", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>x</button>
+            <button onClick={function() { setBuyuk(null); }} style={{ position: "absolute", top: -16, right: -16, background: "#fff", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, fontWeight: 700 }}>x</button>
             <a href={buyuk} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", marginTop: 10, color: "#fff", fontSize: 13 }} onClick={function(e) { e.stopPropagation(); }}>Tam boyut ac</a>
           </div>
         </div>
@@ -261,13 +261,11 @@ function Dashboard({ patients, appointments, onHastaDetay }) {
       <div style={S.card}>
         <div style={S.cardTitle}>Son Kayitli Hastalar</div>
         <Table
-          cols={["Ad Soyad", "TC", "Telefon", "Dogum Tarihi", "Kayit Tarihi", "Islemler"]}
-rows={filtered.map(function(p) { return [
-  <span style={S.hastaLink} onClick={function() { openDetay(p); }}>{p.ad}</span>,
-  <span style={{ fontFamily: "monospace", fontSize: 13 }}>{p.tc}</span>,
-  p.tel,
-  fmt(p.dogum),
-  fmt(p.kayit),
+          cols={["Ad Soyad", "Telefon", "Kan Grubu", "Kayit Tarihi"]}
+          rows={patients.slice(-5).reverse().map(function(p) { return [
+            hastaLink(p.id, p.ad), p.tel,
+            <span style={badge("blue")}>{p.kan}</span>,
+            fmt(p.kayit)
           ]; })}
           emptyMsg="Henuz hasta kaydi yok."
         />
@@ -421,12 +419,12 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
       </div>
       <div style={S.card}>
         <Table
-          cols={["Ad Soyad", "TC", "Telefon", "Kan", "Kayit Tarihi", "Islemler"]}
+          cols={["Ad Soyad", "TC", "Telefon", "Dogum Tarihi", "Kayit Tarihi", "Islemler"]}
           rows={filtered.map(function(p) { return [
             <span style={S.hastaLink} onClick={function() { openDetay(p); }}>{p.ad}</span>,
             <span style={{ fontFamily: "monospace", fontSize: 13 }}>{p.tc}</span>,
             p.tel,
-            <span style={badge("blue")}>{p.kan}</span>,
+            fmt(p.dogum),
             fmt(p.kayit),
             <div style={{ display: "flex", gap: 6 }}>
               <button style={btn("secondary", "sm")} onClick={function() { openDetay(p); }}>Detay</button>
@@ -524,12 +522,10 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
                       </div>
                     )}
                   </div>
-
                   <FotoGaleri
                     fotograflar={tedaviDetay.fotograflar || (tedaviDetay.fotografUrl ? [tedaviDetay.fotografUrl] : [])}
                     tedaviAdi={tedaviDetay.tedavi}
                   />
-
                   <div style={{ marginTop: 12, borderTop: "1px solid #E5E0D8", paddingTop: 12 }}>
                     <div style={{ fontSize: 12, color: G.muted, marginBottom: 6 }}>Fotograf Ekle</div>
                     <input type="file" accept="image/*" multiple style={Object.assign({}, S.input, { padding: "6px 13px" })}
@@ -542,7 +538,6 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
                     />
                     {fotoYukleniyor && <div style={{ fontSize: 12, color: G.primary, marginTop: 6 }}>Fotograflar yukleniyor...</div>}
                   </div>
-
                   <div style={{ borderTop: "1px solid #E5E0D8", paddingTop: 12, marginTop: 12 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: G.muted, marginBottom: 10 }}>Durumu Guncelle</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
