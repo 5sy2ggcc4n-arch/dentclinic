@@ -274,6 +274,168 @@ function Dashboard({ patients, appointments, onHastaDetay }) {
   );
 }
 
+function TedaviDetayPanel({ tedavi, detayId, patients, setPatients, onKapat }) {
+  var [seansForm, setSeansForm] = useState(null);
+  var [fotoYukleniyor, setFotoYukleniyor] = useState(false);
+  var [duzenle, setDuzenle] = useState(false);
+  var [yeniDurum, setYeniDurum] = useState(tedavi.durum);
+  var [yeniTamamTarih, setYeniTamamTarih] = useState(tedavi.tamamTarih || "");
+
+  var fotolar = tedavi.fotograflar || (tedavi.fotografUrl ? [tedavi.fotografUrl] : []);
+  var seanslar = tedavi.seanslar || [];
+
+  async function seansEkle() {
+    if (!seansForm.not.trim()) return alert("Not zorunludur.");
+    var hasta = patients.find(function(p) { return p.id === detayId; });
+    var yeniSeans = { id: uid(), tarih: seansForm.tarih, not: seansForm.not };
+    var yeniListe = (hasta.tedaviler || []).map(function(t) {
+      if (t.id !== tedavi.id) return t;
+      var mevcutSeanslar = t.seanslar || [];
+      return Object.assign({}, t, { seanslar: [...mevcutSeanslar, yeniSeans] });
+    });
+    await db.update("hastalar", detayId, { tedaviler: yeniListe });
+    setPatients(function(ps) { return ps.map(function(p) { return p.id === detayId ? Object.assign({}, p, { tedaviler: yeniListe }) : p; }); });
+    setSeansForm(null);
+  }
+
+  async function seansSil(seansId) {
+    if (!window.confirm("Bu seans notu silinsin mi?")) return;
+    var hasta = patients.find(function(p) { return p.id === detayId; });
+    var yeniListe = (hasta.tedaviler || []).map(function(t) {
+      if (t.id !== tedavi.id) return t;
+      return Object.assign({}, t, { seanslar: (t.seanslar || []).filter(function(s) { return s.id !== seansId; }) });
+    });
+    await db.update("hastalar", detayId, { tedaviler: yeniListe });
+    setPatients(function(ps) { return ps.map(function(p) { return p.id === detayId ? Object.assign({}, p, { tedaviler: yeniListe }) : p; }); });
+  }
+
+  async function fotoEkle(dosyalar) {
+    setFotoYukleniyor(true);
+    var hasta = patients.find(function(p) { return p.id === detayId; });
+    var yeniUrls = [];
+    for (var i = 0; i < dosyalar.length; i++) {
+      var dosya = dosyalar[i];
+      var temizAd = dosya.name.replace(/[^a-zA-Z0-9.]/g, "_");
+      var path = detayId + "/" + uid() + "-" + temizAd;
+      await storage.upload(dosya, path);
+      yeniUrls.push(storage.url(path));
+    }
+    var yeniListe = (hasta.tedaviler || []).map(function(t) {
+      if (t.id !== tedavi.id) return t;
+      var mevcut = t.fotograflar || (t.fotografUrl ? [t.fotografUrl] : []);
+      return Object.assign({}, t, { fotograflar: [...mevcut, ...yeniUrls] });
+    });
+    await db.update("hastalar", detayId, { tedaviler: yeniListe });
+    setPatients(function(ps) { return ps.map(function(p) { return p.id === detayId ? Object.assign({}, p, { tedaviler: yeniListe }) : p; }); });
+    setFotoYukleniyor(false);
+  }
+
+  async function durumKaydet() {
+    var hasta = patients.find(function(p) { return p.id === detayId; });
+    var yeniListe = (hasta.tedaviler || []).map(function(t) {
+      return t.id === tedavi.id ? Object.assign({}, t, { durum: yeniDurum, tamamTarih: yeniTamamTarih }) : t;
+    });
+    await db.update("hastalar", detayId, { tedaviler: yeniListe });
+    setPatients(function(ps) { return ps.map(function(p) { return p.id === detayId ? Object.assign({}, p, { tedaviler: yeniListe }) : p; }); });
+    setDuzenle(false);
+  }
+
+  return (
+    <div style={{ background: G.bg, borderRadius: 12, padding: 18, marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{tedavi.tedavi}</div>
+          <div style={{ fontSize: 12, color: G.muted }}>
+            {tedavi.dis ? "Dis: " + tedavi.dis + " - " : ""}
+            {tedavi.hekim ? "Hekim: " + tedavi.hekim + " - " : ""}
+            Baslangic: {fmt(tedavi.tarih)}
+          </div>
+        </div>
+        <button style={btn("secondary", "sm")} onClick={onKapat}>Kapat</button>
+      </div>
+
+      <span style={badge(tedavi.durum === "Tamamlandi" ? "green" : tedavi.durum === "Devam Ediyor" ? "yellow" : "blue")}>{tedavi.durum}</span>
+
+      {seanslar.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: G.muted, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 10 }}>Seans Notlari ({seanslar.length})</div>
+          {seanslar.map(function(s) {
+            return (
+              <div key={s.id} style={{ background: "#fff", borderRadius: 8, padding: "10px 14px", marginBottom: 8, border: "1px solid #E5E0D8" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ fontSize: 12, color: G.primary, fontWeight: 600, marginBottom: 4 }}>{fmt(s.tarih)}</div>
+                  <button style={btn("danger", "sm")} onClick={function() { seansSil(s.id); }}>Sil</button>
+                </div>
+                <div style={{ fontSize: 14, lineHeight: 1.6 }}>{s.not}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {seansForm ? (
+        <div style={{ marginTop: 14, background: "#fff", borderRadius: 8, padding: 14, border: "1px solid #E5E0D8" }}>
+          <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10 }}>Yeni Seans Notu</div>
+          <div style={S.formGrid}>
+            <div style={S.fg}><label style={S.label}>Tarih</label><input type="date" style={S.input} value={seansForm.tarih} onChange={function(e) { setSeansForm(function(f) { return Object.assign({}, f, { tarih: e.target.value }); }); }} /></div>
+            <div style={{ gridColumn: "1/-1", display: "flex", flexDirection: "column", gap: 5 }}>
+              <label style={S.label}>Not *</label>
+              <textarea style={S.textarea} placeholder="Bu seansta yapilan islemler..." value={seansForm.not} onChange={function(e) { setSeansForm(function(f) { return Object.assign({}, f, { not: e.target.value }); }); }} />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 10 }}>
+            <button style={btn("secondary", "sm")} onClick={function() { setSeansForm(null); }}>Iptal</button>
+            <button style={btn("primary", "sm")} onClick={seansEkle}>Kaydet</button>
+          </div>
+        </div>
+      ) : (
+        <button style={Object.assign({}, btn("secondary", "sm"), { marginTop: 12 })} onClick={function() { setSeansForm({ tarih: today(), not: "" }); }}>+ Seans Notu Ekle</button>
+      )}
+
+      <FotoGaleri fotograflar={fotolar} tedaviAdi={tedavi.tedavi} />
+
+      <div style={{ marginTop: 14, borderTop: "1px solid #E5E0D8", paddingTop: 12 }}>
+        <div style={{ fontSize: 12, color: G.muted, marginBottom: 6 }}>Fotograf Ekle</div>
+        <input type="file" accept="image/*" multiple style={Object.assign({}, S.input, { padding: "6px 13px" })}
+          onChange={function(e) {
+            if (e.target.files && e.target.files.length > 0) {
+              fotoEkle(Array.from(e.target.files));
+              e.target.value = "";
+            }
+          }}
+        />
+        {fotoYukleniyor && <div style={{ fontSize: 12, color: G.primary, marginTop: 4 }}>Yukleniyor...</div>}
+      </div>
+
+      <div style={{ marginTop: 14, borderTop: "1px solid #E5E0D8", paddingTop: 12 }}>
+        {duzenle ? (
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: G.muted, marginBottom: 10 }}>Durumu Guncelle</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+              <div style={S.fg}>
+                <label style={S.label}>Durum</label>
+                <select style={S.select} value={yeniDurum} onChange={function(e) { setYeniDurum(e.target.value); }}>
+                  <option>Tamamlandi</option><option>Devam Ediyor</option><option>Planlandi</option>
+                </select>
+              </div>
+              <div style={S.fg}>
+                <label style={S.label}>Tamamlanma Tarihi</label>
+                <input type="date" style={S.input} value={yeniTamamTarih} onChange={function(e) { setYeniTamamTarih(e.target.value); }} />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button style={btn("secondary", "sm")} onClick={function() { setDuzenle(false); }}>Iptal</button>
+              <button style={btn("primary", "sm")} onClick={durumKaydet}>Kaydet</button>
+            </div>
+          </div>
+        ) : (
+          <button style={btn("secondary", "sm")} onClick={function() { setDuzenle(true); }}>Durumu Guncelle</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
   var [search, setSearch] = useState("");
   var [modal, setModal] = useState(null);
@@ -281,7 +443,7 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
   var [detayTab, setDetayTab] = useState("anamnez");
   var [form, setForm] = useState(null);
   var [tedaviForm, setTedaviForm] = useState(null);
-  var [tedaviDetay, setTedaviDetay] = useState(null);
+  var [tedaviDetayId, setTedaviDetayId] = useState(null);
   var [anamnezDuzenle, setAnamnezDuzenle] = useState(false);
   var [anamnezForm, setAnamnezForm] = useState(null);
   var [kayit, setKayit] = useState(false);
@@ -307,8 +469,8 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
 
   function openYeni() { setForm(emptyForm()); setModal("yeni"); }
   function openDuzenle(p) { setForm(JSON.parse(JSON.stringify(p))); setModal(p.id); }
-  function openDetay(p) { setDetay(p.id); setDetayTab("anamnez"); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }
-  function closeDetay() { setDetay(null); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }
+  function openDetay(p) { setDetay(p.id); setDetayTab("anamnez"); setTedaviForm(null); setTedaviDetayId(null); setAnamnezDuzenle(false); }
+  function closeDetay() { setDetay(null); setTedaviForm(null); setTedaviDetayId(null); setAnamnezDuzenle(false); }
 
   async function save() {
     if (!form.ad.trim() || !form.tc.trim()) return alert("Ad ve TC zorunludur.");
@@ -356,36 +518,12 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
         fotografUrls.push(storage.url(path));
       }
     }
-    var yeniTedavi = { id: uid(), tarih: tedaviForm.tarih, tedavi: tedaviForm.tedavi, dis: tedaviForm.dis, hekim: tedaviForm.hekim, notlar: tedaviForm.notlar, durum: tedaviForm.durum, fotograflar: fotografUrls };
+    var ilkNot = tedaviForm.not ? [{ id: uid(), tarih: tedaviForm.tarih, not: tedaviForm.not }] : [];
+    var yeniTedavi = { id: uid(), tarih: tedaviForm.tarih, tedavi: tedaviForm.tedavi, dis: tedaviForm.dis, hekim: tedaviForm.hekim, durum: tedaviForm.durum, fotograflar: fotografUrls, seanslar: ilkNot };
     var yeniListe = [...(hasta.tedaviler || []), yeniTedavi];
     await db.update("hastalar", detay, { tedaviler: yeniListe });
     setPatients(function(ps) { return ps.map(function(p) { return p.id === detay ? Object.assign({}, p, { tedaviler: yeniListe }) : p; }); });
     setTedaviForm(null);
-    setFotoYukleniyor(false);
-  }
-
-  async function fotoEkle(tedaviId, dosyalar) {
-    setFotoYukleniyor(true);
-    var hasta = patients.find(function(p) { return p.id === detay; });
-    var yeniUrls = [];
-    for (var i = 0; i < dosyalar.length; i++) {
-      var dosya = dosyalar[i];
-      var temizAd = dosya.name.replace(/[^a-zA-Z0-9.]/g, "_");
-      var path = detay + "/" + uid() + "-" + temizAd;
-      await storage.upload(dosya, path);
-      yeniUrls.push(storage.url(path));
-    }
-    var yeniListe = (hasta.tedaviler || []).map(function(t) {
-      if (t.id !== tedaviId) return t;
-      var mevcutFotolar = t.fotograflar || (t.fotografUrl ? [t.fotografUrl] : []);
-      return Object.assign({}, t, { fotograflar: [...mevcutFotolar, ...yeniUrls] });
-    });
-    await db.update("hastalar", detay, { tedaviler: yeniListe });
-    setPatients(function(ps) { return ps.map(function(p) { return p.id === detay ? Object.assign({}, p, { tedaviler: yeniListe }) : p; }); });
-    if (tedaviDetay && tedaviDetay.id === tedaviId) {
-      var guncellendi = yeniListe.find(function(t) { return t.id === tedaviId; });
-      if (guncellendi) setTedaviDetay(guncellendi);
-    }
     setFotoYukleniyor(false);
   }
 
@@ -395,20 +533,11 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
     var yeniListe = (hasta.tedaviler || []).filter(function(t) { return t.id !== tedaviId; });
     await db.update("hastalar", detay, { tedaviler: yeniListe });
     setPatients(function(ps) { return ps.map(function(p) { return p.id === detay ? Object.assign({}, p, { tedaviler: yeniListe }) : p; }); });
-    setTedaviDetay(null);
-  }
-
-  async function guncelleTedavi() {
-    var hasta = patients.find(function(p) { return p.id === detay; });
-    var yeniListe = (hasta.tedaviler || []).map(function(t) {
-      return t.id === tedaviDetay.id ? Object.assign({}, t, { durum: tedaviDetay.durum, tamamTarih: tedaviDetay.tamamTarih }) : t;
-    });
-    await db.update("hastalar", detay, { tedaviler: yeniListe });
-    setPatients(function(ps) { return ps.map(function(p) { return p.id === detay ? Object.assign({}, p, { tedaviler: yeniListe }) : p; }); });
-    setTedaviDetay(null);
+    if (tedaviDetayId === tedaviId) setTedaviDetayId(null);
   }
 
   var detayHasta = patients.find(function(p) { return p.id === detay; });
+  var seciliTedavi = detayHasta && tedaviDetayId ? (detayHasta.tedaviler || []).find(function(t) { return t.id === tedaviDetayId; }) : null;
 
   return (
     <div>
@@ -448,7 +577,7 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {["anamnez", "tedaviler"].map(function(t) {
               return (
-                <button key={t} onClick={function() { setDetayTab(t); setTedaviForm(null); setTedaviDetay(null); setAnamnezDuzenle(false); }}
+                <button key={t} onClick={function() { setDetayTab(t); setTedaviForm(null); setTedaviDetayId(null); setAnamnezDuzenle(false); }}
                   style={{ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer", border: "none", background: detayTab === t ? G.primary : G.primaryLight, color: detayTab === t ? "#fff" : G.primary }}>
                   {t === "anamnez" ? "Anamnez" : "Tedaviler (" + (detayHasta.tedaviler || []).length + ")"}
                 </button>
@@ -500,63 +629,14 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
 
           {detayTab === "tedaviler" && (
             <div>
-              {tedaviDetay && (
-                <div style={{ background: G.bg, borderRadius: 10, padding: 16, marginBottom: 14 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                    <div style={{ fontWeight: 600, fontSize: 15 }}>{tedaviDetay.tedavi}</div>
-                    <button style={btn("secondary", "sm")} onClick={function() { setTedaviDetay(null); }}>Kapat</button>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
-                    {[["Baslangic Tarihi", fmt(tedaviDetay.tarih)], ["Dis No", tedaviDetay.dis || "-"], ["Hekim", tedaviDetay.hekim || "-"]].map(function(item) {
-                      return (
-                        <div key={item[0]}>
-                          <div style={{ fontSize: 11, color: G.muted, marginBottom: 2 }}>{item[0]}</div>
-                          <div style={{ fontSize: 14, fontWeight: 500 }}>{item[1]}</div>
-                        </div>
-                      );
-                    })}
-                    {tedaviDetay.notlar && (
-                      <div style={{ gridColumn: "1/-1" }}>
-                        <div style={{ fontSize: 11, color: G.muted, marginBottom: 2 }}>Notlar</div>
-                        <div style={{ fontSize: 14, lineHeight: 1.6 }}>{tedaviDetay.notlar}</div>
-                      </div>
-                    )}
-                  </div>
-                  <FotoGaleri
-                    fotograflar={tedaviDetay.fotograflar || (tedaviDetay.fotografUrl ? [tedaviDetay.fotografUrl] : [])}
-                    tedaviAdi={tedaviDetay.tedavi}
-                  />
-                  <div style={{ marginTop: 12, borderTop: "1px solid #E5E0D8", paddingTop: 12 }}>
-                    <div style={{ fontSize: 12, color: G.muted, marginBottom: 6 }}>Fotograf Ekle</div>
-                    <input type="file" accept="image/*" multiple style={Object.assign({}, S.input, { padding: "6px 13px" })}
-                      onChange={function(e) {
-                        if (e.target.files && e.target.files.length > 0) {
-                          fotoEkle(tedaviDetay.id, Array.from(e.target.files));
-                          e.target.value = "";
-                        }
-                      }}
-                    />
-                    {fotoYukleniyor && <div style={{ fontSize: 12, color: G.primary, marginTop: 6 }}>Fotograflar yukleniyor...</div>}
-                  </div>
-                  <div style={{ borderTop: "1px solid #E5E0D8", paddingTop: 12, marginTop: 12 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: G.muted, marginBottom: 10 }}>Durumu Guncelle</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                      <div style={S.fg}>
-                        <label style={S.label}>Durum</label>
-                        <select style={S.select} value={tedaviDetay.durum} onChange={function(e) { setTedaviDetay(function(d) { return Object.assign({}, d, { durum: e.target.value }); }); }}>
-                          <option>Tamamlandi</option><option>Devam Ediyor</option><option>Planlandi</option>
-                        </select>
-                      </div>
-                      <div style={S.fg}>
-                        <label style={S.label}>Tamamlanma Tarihi</label>
-                        <input type="date" style={S.input} value={tedaviDetay.tamamTarih || ""} onChange={function(e) { setTedaviDetay(function(d) { return Object.assign({}, d, { tamamTarih: e.target.value }); }); }} />
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                      <button style={btn("primary", "sm")} onClick={guncelleTedavi}>Kaydet</button>
-                    </div>
-                  </div>
-                </div>
+              {seciliTedavi && (
+                <TedaviDetayPanel
+                  tedavi={seciliTedavi}
+                  detayId={detay}
+                  patients={patients}
+                  setPatients={setPatients}
+                  onKapat={function() { setTedaviDetayId(null); }}
+                />
               )}
 
               {tedaviForm ? (
@@ -569,12 +649,15 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
                     <div style={S.fg}><label style={S.label}>Hekim</label><input style={S.input} placeholder="Dr. ..." value={tedaviForm.hekim} onChange={function(e) { setTedaviForm(function(f) { return Object.assign({}, f, { hekim: e.target.value }); }); }} /></div>
                     <div style={S.fg}><label style={S.label}>Durum</label>
                       <select style={S.select} value={tedaviForm.durum} onChange={function(e) { setTedaviForm(function(f) { return Object.assign({}, f, { durum: e.target.value }); }); }}>
-                        <option>Tamamlandi</option><option>Devam Ediyor</option><option>Planlandi</option>
+                        <option>Devam Ediyor</option><option>Tamamlandi</option><option>Planlandi</option>
                       </select>
                     </div>
-                    <div style={Object.assign({}, S.fg, { gridColumn: "1/-1" })}><label style={S.label}>Notlar</label><textarea style={S.textarea} placeholder="Tedavi hakkinda notlar..." value={tedaviForm.notlar} onChange={function(e) { setTedaviForm(function(f) { return Object.assign({}, f, { notlar: e.target.value }); }); }} /></div>
                     <div style={Object.assign({}, S.fg, { gridColumn: "1/-1" })}>
-                      <label style={S.label}>Fotograflar Ekle (birden fazla secebilirsiniz)</label>
+                      <label style={S.label}>Ilk Seans Notu (istege bagli)</label>
+                      <textarea style={S.textarea} placeholder="Bu seansta yapilan islemler..." value={tedaviForm.not || ""} onChange={function(e) { setTedaviForm(function(f) { return Object.assign({}, f, { not: e.target.value }); }); }} />
+                    </div>
+                    <div style={Object.assign({}, S.fg, { gridColumn: "1/-1" })}>
+                      <label style={S.label}>Fotograflar Ekle (istege bagli)</label>
                       <input type="file" accept="image/*" multiple style={Object.assign({}, S.input, { padding: "6px 13px" })}
                         onChange={function(e) { setTedaviForm(function(f) { return Object.assign({}, f, { fotografDosyalar: Array.from(e.target.files) }); }); }} />
                       {tedaviForm.fotografDosyalar && tedaviForm.fotografDosyalar.length > 0 && (
@@ -585,29 +668,31 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
                   <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                     <button style={btn("secondary", "sm")} onClick={function() { setTedaviForm(null); }}>Iptal</button>
                     <button style={Object.assign({}, btn("primary", "sm"), { opacity: fotoYukleniyor ? 0.7 : 1 })} onClick={saveTedavi} disabled={fotoYukleniyor}>
-                      {fotoYukleniyor ? "Fotograflar yukleniyor..." : "Kaydet"}
+                      {fotoYukleniyor ? "Yukleniyor..." : "Kaydet"}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div>
                   <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-                    <button style={btn("primary", "sm")} onClick={function() { setTedaviDetay(null); setTedaviForm({ tarih: "", tedavi: "", dis: "", hekim: "", notlar: "", durum: "Tamamlandi", fotografDosyalar: [] }); }}>+ Tedavi Ekle</button>
+                    <button style={btn("primary", "sm")} onClick={function() { setTedaviDetayId(null); setTedaviForm({ tarih: today(), tedavi: "", dis: "", hekim: "", durum: "Devam Ediyor", not: "", fotografDosyalar: [] }); }}>+ Tedavi Ekle</button>
                   </div>
                   {(detayHasta.tedaviler || []).length === 0
                     ? <p style={{ fontSize: 13, color: G.muted }}>Henuz tedavi kaydi yok.</p>
                     : <Table
-                        cols={["Tarih", "Tedavi", "Dis", "Durum", "Foto", "Detay", "Sil"]}
+                        cols={["Tarih", "Tedavi", "Dis", "Durum", "Seans", "Foto", "Islem"]}
                         rows={(detayHasta.tedaviler || []).map(function(t) {
                           var fotolar = t.fotograflar || (t.fotografUrl ? [t.fotografUrl] : []);
+                          var seanslar = t.seanslar || [];
                           return [
                             fmt(t.tarih), t.tedavi, t.dis || "-",
                             <span style={badge(t.durum === "Tamamlandi" ? "green" : t.durum === "Devam Ediyor" ? "yellow" : "blue")}>{t.durum}</span>,
-                            fotolar.length > 0
-                              ? <span style={{ fontSize: 12, color: G.primary, fontWeight: 500 }}>{fotolar.length} foto</span>
-                              : <span style={{ fontSize: 12, color: G.muted }}>-</span>,
-                            <button style={btn("secondary", "sm")} onClick={function() { setTedaviDetay(t); }}>Goruntule</button>,
-                            <button style={btn("danger", "sm")} onClick={function() { silTedavi(t.id); }}>Sil</button>
+                            <span style={{ fontSize: 12, color: seanslar.length > 0 ? G.primary : G.muted, fontWeight: seanslar.length > 0 ? 600 : 400 }}>{seanslar.length > 0 ? seanslar.length + " seans" : "-"}</span>,
+                            <span style={{ fontSize: 12, color: fotolar.length > 0 ? G.primary : G.muted, fontWeight: fotolar.length > 0 ? 600 : 400 }}>{fotolar.length > 0 ? fotolar.length + " foto" : "-"}</span>,
+                            <div style={{ display: "flex", gap: 4 }}>
+                              <button style={btn("secondary", "sm")} onClick={function() { setTedaviDetayId(t.id); setTedaviForm(null); }}>Ac</button>
+                              <button style={btn("danger", "sm")} onClick={function() { silTedavi(t.id); }}>Sil</button>
+                            </div>
                           ];
                         })}
                       />
