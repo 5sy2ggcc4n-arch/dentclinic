@@ -479,6 +479,10 @@ var filtered = sorted_patients.filter(function(p) {
 
   async function save() {
     if (!form.ad.trim() || !form.tc.trim()) return alert("Ad ve TC zorunludur.");
+if (modal === "yeni") {
+  var tcKontrol = patients.find(function(p) { return p.tc === form.tc.trim(); });
+  if (tcKontrol) return alert("Bu TC numarasi ile kayitli hasta zaten mevcut: " + tcKontrol.ad);
+}
     setKayit(true);
     try {
       if (modal === "yeni") {
