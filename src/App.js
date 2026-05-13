@@ -457,7 +457,12 @@ function Hastalar({ patients, setPatients, acikHastaId, onAcikHastaClear }) {
     }
   }, [acikHastaId]);
 
-  var filtered = patients.filter(function(p) {
+  var sorted_patients = patients.slice().sort(function(a, b) {
+  if (!a.kayit) return 1;
+  if (!b.kayit) return -1;
+  return b.kayit.localeCompare(a.kayit);
+});
+var filtered = sorted_patients.filter(function(p) {
     return p.ad.toLowerCase().includes(search.toLowerCase()) ||
       (p.tc || "").includes(search) ||
       (p.tel || "").includes(search);
